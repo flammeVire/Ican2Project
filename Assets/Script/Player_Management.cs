@@ -6,9 +6,10 @@ public class Player_Management : MonoBehaviour
 {
     public float speed;
     public Rigidbody2D rb;
-    public GameObject CurrentinterractObj;
-    bool IsInterracting;
+    public GameObject BoxInterractObj;
 
+    bool IsInterracting = false;
+    bool BoxMoving = false;
     private void Update()
     {
         Movement();
@@ -18,7 +19,7 @@ public class Player_Management : MonoBehaviour
     void Movement()
     {
         float x = Input.GetAxis("Horizontal"), y = Input.GetAxis("Vertical");
-        if (!IsInterracting)
+        if (!BoxMoving)
         {
             rb.velocity = new Vector2(x, y) * speed;
             if (x > 0)
@@ -53,48 +54,48 @@ public class Player_Management : MonoBehaviour
 
     #region InterractInput
     void InterractInput()
-    {
+    { 
         if (Input.GetButtonDown("Jump"))
         {
-            CurrentinterractObj = Interract.InterractObject;
-
-            if (CurrentinterractObj != null)
+            //le joueur n'est pas en interraction
+            if (!IsInterracting)
             {
-                if (CurrentinterractObj.layer == 7)
+                //un objet est dans la zone d'interraction
+                if(Interract.InterractObject != null)
                 {
-                    if (CurrentinterractObj.TryGetComponent<FixedJoint2D>(out FixedJoint2D component))
+                    //cas pnj
+                    if (Interract.InterractObject.layer == 6)
                     {
-                        Debug.Log("component == null");
-                        Destroy(component);
-                        IsInterracting = false;
-                        StartCoroutine(StopBoxMoving(CurrentinterractObj.GetComponent<Rigidbody2D>()));
-
+                        Interract.InterractObject.GetComponent<PNJ_Manager>().ShowDialogue();
                     }
-                    else
+                    //cas boite
+                    else if(Interract.InterractObject.layer == 7)
                     {
-                        Joint2D joint = CurrentinterractObj.AddComponent<FixedJoint2D>();
+                        Joint2D joint = Interract.InterractObject.AddComponent<FixedJoint2D>();
                         joint.connectedBody = rb;
-                        IsInterracting = true;
-                        CurrentinterractObj.GetComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Dynamic;
+                        BoxMoving = true;
+                        Interract.InterractObject.GetComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Dynamic;
+                        BoxInterractObj = Interract.InterractObject;
                     }
+                    IsInterracting = true;
                 }
-                else if (CurrentinterractObj.layer == 6)
-                {
-                    //definir ce qui se passe quand on rentre dans un pnj
-                    //sois afficher bulle de dialogue
-                    // sois parle tout seul quand on est proche
-                }
+                
             }
+            //le joueur est en interraction
             else
             {
-                Joint2D ObjPush = FindAnyObjectByType<FixedJoint2D>();
-                if (ObjPush.connectedBody == this)
+                IsInterracting = false;
+                //si le joueur deplacer une boite
+                if (BoxMoving)
                 {
-                    Debug.Log("component == null");
-                    StartCoroutine(StopBoxMoving(ObjPush.GetComponent<Rigidbody2D>()));
-                    
-                    IsInterracting = false;
-                    Destroy(ObjPush);
+                    if(BoxInterractObj != null && BoxInterractObj.TryGetComponent<Joint2D>(out Joint2D component))
+                    {
+                        Interract.InterractObject = null;
+                        Debug.Log(BoxInterractObj.GetComponent<Rigidbody2D>());
+                        StartCoroutine(StopBoxMoving(BoxInterractObj.GetComponent<Rigidbody2D>()));
+                        Destroy(component);
+                        BoxMoving = false;
+                    }
                 }
             }
         }
