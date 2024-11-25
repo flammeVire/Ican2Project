@@ -5,7 +5,6 @@ using UnityEngine;
 public class GameManager : MonoBehaviour
 {
     [SerializeField] Transform playerPos;
-    [SerializeField] GameObject ImageForCutOut;
 
     private void Update()
     {
@@ -15,7 +14,6 @@ public class GameManager : MonoBehaviour
     void CamFollowing()
     {
         transform.position = new Vector3(playerPos.position.x,playerPos.position.y,transform.position.z);
-       // ImageForCutOut.transform.position = playerPos.position;
     }
 
 }
