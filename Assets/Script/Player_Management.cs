@@ -8,14 +8,30 @@ public class Player_Management : MonoBehaviour
     public Rigidbody2D rb;
     public GameObject BoxInterractObj;
 
+    [Header("Ash Data")]
+    public GameObject AshHalo;
+    float LifeTime;
+    public float MaxLifeTime;
+    public bool inAsh;
+
     bool IsInterracting = false;
     bool BoxMoving = false;
     private void Update()
     {
         Movement();
         InterractInput();
-    }
 
+        if (inAsh)
+        {
+            Suffocating();
+            
+        }
+        else
+        {
+            LifeTime = MaxLifeTime;
+        }
+        HaloReducing(inAsh);
+    }
     void Movement()
     {
         float x = Input.GetAxis("Horizontal"), y = Input.GetAxis("Vertical");
@@ -107,5 +123,55 @@ public class Player_Management : MonoBehaviour
         yield return null;
         objrb.bodyType = RigidbodyType2D.Kinematic;
     }
+    #endregion
+
+    #region ash
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if(collision.gameObject.tag == "Ash")
+        {
+            Debug.Log("InAsh");
+            inAsh = true;
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        if (collision.gameObject.tag == "Ash")
+        {
+            Debug.Log("InAsh");
+            inAsh = false;
+        }
+    }
+
+    void Suffocating()
+    {
+        LifeTime -= Time.deltaTime;
+        if (LifeTime <= 0) 
+        {
+            Debug.Log("Player Is Dead");
+        }
+    }
+
+    void HaloReducing(bool Actif)
+    {
+        if (Actif)
+        {
+            float LifeInPercent = LifeTime*10 / 100;
+            float MaskInPercent = AshHalo.GetComponent<DynamicHole>().MaskSize * LifeInPercent;
+            AshHalo.GetComponent<DynamicHole>().maskSize = MaskInPercent;
+
+            AshHalo.GetComponent<DynamicHole>().targetObject = AshHalo;
+        }
+        else 
+        {
+            AshHalo.GetComponent<DynamicHole>().targetObject = AshHalo.GetComponent<DynamicHole>().FakePoint;
+
+            AshHalo.GetComponent<DynamicHole>().maskSize = AshHalo.GetComponent<DynamicHole>().MaskSize;
+        }
+    }
+
+
     #endregion
 }
