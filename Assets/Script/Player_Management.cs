@@ -16,6 +16,8 @@ public class Player_Management : MonoBehaviour
 
     bool IsInterracting = false;
     bool BoxMoving = false;
+    bool HaveItemNeeded;
+
     private void Update()
     {
         Movement();
@@ -30,6 +32,8 @@ public class Player_Management : MonoBehaviour
         {
             LifeTime = MaxLifeTime;
         }
+
+        
         HaloReducing(inAsh);
     }
     void Movement()
@@ -62,9 +66,23 @@ public class Player_Management : MonoBehaviour
 
             }
         }
-        else
+        else // bouge en ligne droite uniquement
         {
-            rb.velocity = new Vector2(x, y) * (speed /2);
+           // rb.velocity = new Vector2(x, y) * (speed /2);
+
+            if(BoxInterractObj.transform.rotation != Quaternion.Euler(0,0,0))
+            {
+                Debug.Log("different de 0");
+                rb.velocity = new Vector2(0, y) * speed/2;
+
+            }
+            else
+            {
+                Debug.Log("== de 0");
+                rb.velocity = new Vector2(x, 0) * speed /2;
+                
+            }
+            
         }
     }
 
@@ -82,7 +100,8 @@ public class Player_Management : MonoBehaviour
                     //cas pnj
                     if (Interract.InterractObject.layer == 6)
                     {
-                        Interract.InterractObject.GetComponent<PNJ_Manager>().ShowDialogue();
+                        Debug.Log("have item ==" + HaveItemNeeded);
+                            Interract.InterractObject.GetComponent<PNJ_Manager>().ShowDialogue(HaveItemNeeded);
                     }
                     //cas boite
                     else if(Interract.InterractObject.layer == 7)
@@ -92,6 +111,12 @@ public class Player_Management : MonoBehaviour
                         BoxMoving = true;
                         Interract.InterractObject.GetComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Dynamic;
                         BoxInterractObj = Interract.InterractObject;
+                        transform.position = Interract.InterractObject.transform.position;
+                    }
+                    //cas Object
+                    else if(Interract.InterractObject.layer == 10)
+                    {
+                        HaveItemNeeded = true;
                     }
                     IsInterracting = true;
                 }

@@ -13,10 +13,18 @@ public class PNJ_Manager : MonoBehaviour
     [SerializeField] GameObject Canva;
     string currentMessage = "";
     [SerializeField] float delay = 0.1f;
-
-    public void ShowDialogue()
+    
+    public void ShowDialogue(bool hasItem)
     {
-        string message = Pnj_Scriptable.Dialogue;
+        string message;
+        if (!hasItem) 
+        {
+             message = Pnj_Scriptable.Dialogue1;
+        }
+        else
+        {
+             message = Pnj_Scriptable.Dialogue2;
+        }
 
         if (!PlayerHasInterracting) 
         {

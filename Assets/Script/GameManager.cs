@@ -11,7 +11,13 @@ public class GameManager : MonoBehaviour
     [SerializeField] float ActualZoom;
     [SerializeField] float SpeedZoom;
 
-    public Transform[] centerofQuartier;
+    [Header("Player")]
+    [SerializeField] GameObject Player;
+    [SerializeField] Transform NextPlayerPos;
+
+    [Header("Quartier Data")]
+    [SerializeField] Transform[] centerofQuartier;
+    [SerializeField] float[] SizeOfCam;
     
     public QuartierDispo ActualQuartier;
     public enum QuartierDispo
@@ -24,9 +30,15 @@ public class GameManager : MonoBehaviour
             , Outro
     }
 
+    private void Start()
+    {
+        Player_Tp(NextPlayerPos);
+        CameraOnQuartier(ActualQuartier);
+    }
+
     private void Update()
     {
-        CameraZoom(true);
+        //CameraZoom(true);
     }
 
     #region CameraManagement
@@ -68,18 +80,22 @@ public class GameManager : MonoBehaviour
         switch (quartier)
         {
             case QuartierDispo.Quartier1:
-                transform.position = centerofQuartier[0].position;
+                transform.position = new Vector3(centerofQuartier[0].position.x,centerofQuartier[0].position.y,-100);
+                cam.orthographicSize = SizeOfCam[0];
                 break;
             case QuartierDispo.Quartier2:
-                transform.position = centerofQuartier[1].position;
+                transform.position = new Vector3(centerofQuartier[1].position.x, centerofQuartier[1].position.y, -100);
+                cam.orthographicSize = SizeOfCam[1];
 
                 break;
             case QuartierDispo.Quartier3:
-                transform.position = centerofQuartier[2].position;
+                transform.position = new Vector3(centerofQuartier[2].position.x, centerofQuartier[2].position.y, -100);
+                cam.orthographicSize = SizeOfCam[2];
 
                 break;
             case QuartierDispo.Quartier4:
-                transform.position = centerofQuartier[3].position;
+                transform.position = new Vector3(centerofQuartier[3].position.x, centerofQuartier[3].position.y, -100);
+                cam.orthographicSize = SizeOfCam[3];
 
                 break;
             default:
@@ -87,5 +103,16 @@ public class GameManager : MonoBehaviour
                 break;
         }
     }
+
+    #endregion
+
+    #region Game Management
+
+    public void Player_Tp(Transform transform)
+    {
+        Vector3 top_pos = new Vector3(transform.position.x,transform.position.y, 0);
+        Player.transform.position = top_pos;
+    }
+
     #endregion
 }

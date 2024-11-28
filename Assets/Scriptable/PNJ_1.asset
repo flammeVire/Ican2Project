@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78cdd35aefcfe8a4885fc013927e3f31, type: 3}
   m_Name: PNJ_1
   m_EditorClassIdentifier: 
-  Dialogue: "oui je suis le dialogue 1 bien jou\xE9 \u263A\u263B\u2640\n\nretour
-    a la ligne preceder d'un espace"
+  Dialogue1: il me faut la statue
+  Dialogue2: tu as la statue gg
