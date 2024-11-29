@@ -17,7 +17,7 @@ public class Player_Management : MonoBehaviour
     bool IsInterracting = false;
     bool BoxMoving = false;
     bool HaveItemNeeded;
-
+    bool? BucketIsFull = null;
     private void Update()
     {
         Movement();
@@ -117,8 +117,21 @@ public class Player_Management : MonoBehaviour
                     else if(Interract.InterractObject.layer == 10)
                     {
                         HaveItemNeeded = true;
+                        //rajouter si obj == seau
                     }
+
+                    //cas boite en feu
+                    else if(Interract.InterractObject.layer == 8)
+                    {
+                        if(BucketIsFull == true) 
+                        {
+                            Debug.Log("eau sur feu");
+                        }
+                    }
+
                     IsInterracting = true;
+
+                    
                 }
                 
             }
