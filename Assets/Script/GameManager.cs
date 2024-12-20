@@ -9,7 +9,7 @@ public class GameManager : MonoBehaviour
     [SerializeField]int TurnMax;
     int TurnLeft;
     [SerializeField]int PAMax;
-    int PALeft;
+    public int PALeft;
     bool IsPlayerTurn;
 
 
@@ -41,7 +41,6 @@ public class GameManager : MonoBehaviour
     IEnumerator IaTurn()
     {
         yield return null;
-        
         StartCoroutine (PlayerTurn());
     }
 
@@ -82,7 +81,7 @@ public class GameManager : MonoBehaviour
 
     #region ShowText
 
-    private void UpdateText()
+    public void UpdateText()
     {
         PA_Text.text = "PA: " + PALeft;
         PA_Text.text = "PA: " + PALeft;
