@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -5,14 +6,14 @@ using UnityEngine.Tilemaps;
 
 public class MouseInWorld : MonoBehaviour
 {
+    #region Data
+    public GameManager gameManager;
+
     public Vector2 CursorOnScreen;
-    [SerializeField]Tilemap Tile_TileMap;
-    [SerializeField]Tilemap Dynamic_TileMap;
-    [SerializeField]Tilemap Cursor_TileMap;
-    [SerializeField] TileBase Floor, Ashes, Hole,Cursor;
     TileBase selected = null;
     Vector2 selectedPosition;
-    public GameManager gameManager;
+
+    #endregion
 
 
     private void Update()
@@ -26,7 +27,7 @@ public class MouseInWorld : MonoBehaviour
         Vector3 screenPoint = (Input.mousePosition);
         screenPoint.z = 10.0f;
         CursorOnScreen = new Vector2(Camera.main.ScreenToWorldPoint(screenPoint).x, Camera.main.ScreenToWorldPoint(screenPoint).y);
-       // Debug.Log("cursor:" + CursorOnScreen); 
+        // Debug.Log("cursor:" + CursorOnScreen); 
     }
 
     void InputTilesSelected()
@@ -36,86 +37,150 @@ public class MouseInWorld : MonoBehaviour
             if (selected == null)
             {
                 Vector3Int tilePos;
-                Debug.Log("Input 0");
-                (selected,tilePos) = GetTileAtWorldPosition(CursorOnScreen,Dynamic_TileMap);
-                CursorSelector(tilePos, Cursor);
+                (selected, tilePos) = gameManager.GetTileAtWorldPosition(CursorOnScreen, gameManager.Dynamic_TileMap);
+
                 selectedPosition = new Vector2(tilePos.x, tilePos.y);
+
+                if (selected != null)
+                {
+                    gameManager.Cursor_TileMap.SetTile(tilePos, gameManager.cursor[0]);
+                }
+
                 Debug.Log(selected);
                 Debug.Log(selectedPosition);
             }
             else
             {
-                if (selected.name == "House")
+                if (gameManager.TileExistInArray(selected, gameManager.House) || gameManager.TileExistInArray(selected, gameManager.Citizens))
                 {
-                    Move_House();
+                    Move_Dynamics(selected);
+                }
+
+            }
+        }
+    }
+
+
+    
+
+    void Move_Dynamics(TileBase tileSelected)
+    {
+        (TileBase tileBase, Vector3Int cellPos) = (gameManager.GetTileAtWorldPosition(CursorOnScreen, gameManager.Tile_TileMap));
+        (TileBase dynamicTile, _) = gameManager.GetTileAtWorldPosition(cellPos, gameManager.Dynamic_TileMap);
+        (TileBase AshesTiles, _) = gameManager.GetTileAtWorldPosition(cellPos, gameManager.Ashes_TileMap);
+        //Cas general
+
+        //cas maison
+        if (gameManager.TileExistInArray(tileSelected, gameManager.House))
+        {
+            if (dynamicTile == null && AshesTiles == null)
+            {
+                if (gameManager.TileExistInArray(tileBase, gameManager.Floors))
+                {
+                    gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), null);
+                    gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)cellPos.x, (int)cellPos.y, 0), selected);
+                    gameManager.PALeft -= 1;
+                    gameManager.UpdateText();
+                }
+                else if (gameManager.TileExistInArray(tileBase, gameManager.Holes))
+                {
+                    gameManager.Tile_TileMap.SetTile(new Vector3Int((int)cellPos.x, (int)cellPos.y, 0), gameManager.Floors[0]);
+                    gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), null);
+                    gameManager.PALeft -= 1;
+                    gameManager.UpdateText();
                 }
                 
             }
         }
-    }
 
-    (TileBase,Vector3Int) GetTileAtWorldPosition(Vector3 worldPos,Tilemap MapWanted)
-    {
-        Vector3Int cellPosition = MapWanted.WorldToCell(worldPos);
-        
-        TileBase tile = MapWanted.GetTile(cellPosition);
-        
-
-        return (tile,cellPosition);
-    }
-
-
-
-    void Move_House()
-    {
-        (TileBase tileBase, Vector3Int cellPos) = (GetTileAtWorldPosition(CursorOnScreen, Tile_TileMap));
-        if (tileBase.name == "ClassicFloor")
+        //cas citoyens
+        else if (gameManager.TileExistInArray(tileSelected, gameManager.Citizens))
         {
-            (TileBase dynamicTile, _) = GetTileAtWorldPosition(cellPos, Dynamic_TileMap);
-            if (dynamicTile == null)
+            if (dynamicTile == null && IsTilesAdjacent(cellPos) && AshesTiles == null)
             {
-                Dynamic_TileMap.SetTile(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), null);
-                Dynamic_TileMap.SetTile(new Vector3Int((int)cellPos.x, (int)cellPos.y, 0), selected);
-                CursorSelector(new Vector3Int((int)cellPos.x, (int)cellPos.y, 0), Cursor);
-                gameManager.PALeft -= 1;
-                gameManager.UpdateText();
+                if (gameManager.TileExistInArray(tileBase, gameManager.Floors))
+                {
+                    gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), null);
+                    gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)cellPos.x, (int)cellPos.y, 0), selected);
+                    gameManager.PALeft -= 1;
+                    gameManager.UpdateText();
+                }
+                else if (gameManager.TileExistInArray(tileBase, gameManager.Drain))
+                {
+                    gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)cellPos.x, (int)cellPos.y, 0), selected);
+                    gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), null);
+                    gameManager.PALeft -= 1;
+                    gameManager.UpdateText();
+                }
             }
-            
-            selected = null;
-            selectedPosition = Vector2.zero;
+            else if (dynamicTile != null && IsTilesAdjacent(cellPos) && AshesTiles == null) 
+            {
+                if (gameManager.TileExistInArray(dynamicTile, gameManager.Citizens))
+                {
+                    gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)cellPos.x, (int)cellPos.y, 0), gameManager.Citizens[HowManyCitizensOnTiles(tileSelected,dynamicTile) -1]);
+                    gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), null);
+                    gameManager.PALeft -= 1;
+                    gameManager.UpdateText();
+                }
+            }
         }
-        else if (tileBase.name == "Hole")
-        {
-            Dynamic_TileMap.SetTile(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), null);
-            Tile_TileMap.SetTile(new Vector3Int((int) cellPos.x, (int) cellPos.y, 0),Floor);
-        }
+        gameManager.Cursor_TileMap.SetTile(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), null);
+        selected = null;
+        selectedPosition = Vector2.zero;
+
     }
 
-    void CursorSelector(Vector3Int cellPos, TileBase cursor)
+
+
+    bool IsTilesAdjacent(Vector3Int cellpos)
+    {
+        float deltaX = Mathf.Abs(cellpos.x - selectedPosition.x);
+        float deltaY = Mathf.Abs(cellpos.y - selectedPosition.y);
+
+        if (deltaX > 1.5 || deltaY > 1.5)
+        {
+            return false; // Trop éloigné
+        }
+
+        if (deltaX > deltaY) // Gauche/Droite
+        {
+            return true;
+        }
+        else if (deltaY > deltaX) // Haut/Bas
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    
+
+    int HowManyCitizensOnTiles(TileBase citizenSelected , TileBase citizenTile )
+    {
+        int x,y ;
+
+        for (x = 1; x < gameManager.Citizens.Length+1; x++) 
+        {
+            if(gameManager.Citizens[x-1] == citizenSelected)
+            {
+                break;
+            }
+        }
+        for (y = 1; y < gameManager.Citizens.Length+1; y++) 
+        {
+            if (gameManager.Citizens[y-1] == citizenTile)
+            {
+                break ;
+            }
+        }
+        Debug.Log("il y a " + (x + y) + "citoyens");
+        return x+y;
+    }
+
+}
+
+/*    void CursorSelector(Vector3Int cellPos, TileBase cursor)
     {
         Cursor_TileMap.SetTile(cellPos, cursor);
-    }
-
-
-    Vector2Int MoveVector()
-    {
-        float deltaX = Mathf.Abs(CursorOnScreen.x - selectedPosition.x);
-        float deltaY = Mathf.Abs(CursorOnScreen.y - selectedPosition.y);
-
-        if(deltaX > 1.5 || deltaY > 1.5)
-        {
-            return new Vector2Int(0,0); // Trop éloigné
-        }
-
-        if(deltaX > deltaY) // Gauche/Droite
-        {
-            return CursorOnScreen.x < selectedPosition.x ? new Vector2Int(-1, 0) : new Vector2Int(1, 0);
-        }
-        else if(deltaY > deltaX) // Haut/Bas
-        {
-            return CursorOnScreen.y > selectedPosition.y ? new Vector2Int(0,1) : new Vector2Int(0, -1);
-        }
-
-        return new Vector2Int(0, 0);
-    }
-}
+    }*/
