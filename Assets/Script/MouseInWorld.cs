@@ -79,6 +79,7 @@ public class MouseInWorld : MonoBehaviour
                 {
                     gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), null);
                     gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)cellPos.x, (int)cellPos.y, 0), selected);
+                    gameManager.Cursor_TileMap.SetTile(new Vector3Int((int)cellPos.x, (int)cellPos.y, 0), null);
                     gameManager.PALeft -= 1;
                     gameManager.UpdateText();
                 }
@@ -125,6 +126,7 @@ public class MouseInWorld : MonoBehaviour
             }
         }
         gameManager.Cursor_TileMap.SetTile(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), null);
+        gameManager.AshesPrevision();
         selected = null;
         selectedPosition = Vector2.zero;
 
@@ -180,7 +182,3 @@ public class MouseInWorld : MonoBehaviour
 
 }
 
-/*    void CursorSelector(Vector3Int cellPos, TileBase cursor)
-    {
-        Cursor_TileMap.SetTile(cellPos, cursor);
-    }*/

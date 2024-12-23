@@ -1,9 +1,9 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.Tilemaps;
 using System;
+
 
 public class GameManager : MonoBehaviour
 {
@@ -34,18 +34,21 @@ public class GameManager : MonoBehaviour
     public TileBase[] cursor;
     public TileBase[] Drain;
 
-    Vector3Int[] AshesCellPosition = new Vector3Int[12];
+    [SerializeField]Vector3Int[] AshesCellPosition = new Vector3Int[12];
 
     private void Start()
     {
-        StartCoroutine(PlayerTurn());
+        AshesFirstPosition();
+
         TurnLeft = TurnMax;
         PALeft = PAMax;
+        StartCoroutine(PlayerTurn());
     }
 
 
     IEnumerator PlayerTurn()
     {
+        AshesPrevision();
         yield return null;
         PALeft = PAMax;
         IsPlayerTurn = true;
@@ -59,6 +62,9 @@ public class GameManager : MonoBehaviour
     IEnumerator IaTurn()
     {
         yield return null;
+        AshesMovement();
+        KillCitizens();
+        KillHouses();
         StartCoroutine (PlayerTurn());
        
     }
@@ -110,14 +116,163 @@ public class GameManager : MonoBehaviour
     #endregion
 
     #region tile management
-    //retour le type de tiles ET ses coordonnées dans le monde
+
+    #region Ashes
+    void AshesFirstPosition()
+    {
+        Vector3 ashescellpos = new Vector3(-5.5f, 4.5f, 0);
+        for (int i = 0; i < AshesCellPosition.Length; i++) 
+        {
+            (TileBase ashes, Vector3Int arrayPosition) = GetTileAtWorldPosition(ashescellpos, Ashes_TileMap);
+            if (TileExistInArray(ashes, Ashes))
+            {
+                AshesCellPosition[i] = arrayPosition;
+                ashescellpos += Vector3.right;
+            }
+            else
+            {
+                Debug.LogError("ISSUES ASHES CELL NOT FOUND");
+            }
+        }
+    }
+
+    void AshesMovement()
+    {
+        Vector3Int[] ancienPosition = new Vector3Int[12];
+
+        // i = all ashes tiles
+        for (int i = 0; i < AshesCellPosition.Length; i++)
+        {
+            ancienPosition[i] = AshesCellPosition[i];
+
+            bool[] canmove = new bool[4];
+            Vector3Int[] nextpos = new Vector3Int[4];
+            (canmove, nextpos) = CanTilesMoveAdjacent(AshesCellPosition[i]);
+
+
+            // j = all 4 direction
+            for (int j = 0; j < nextpos.Length; j++)
+            {
+                if (canmove[j])
+                {
+                    Ashes_TileMap.SetTile(nextpos[j], Ashes[0]);
+
+                    if (j == 1)
+                    {
+                        AshesCellPosition[i] = nextpos[j];
+                    }
+                }
+
+
+            }
+        }
+
+        for (int i = 0; i < AshesCellPosition.Length; i++)
+        {
+            if (ancienPosition[i] == AshesCellPosition[i])
+            {
+                for (int collum = 0; collum < AshesCellPosition.Length; collum++)
+                {
+                    Vector3 pos = new Vector3(AshesCellPosition[i].x, AshesCellPosition[i].y - collum, AshesCellPosition[i].z);
+                    (TileBase cellTile, Vector3Int cellpos) = GetTileAtWorldPosition(pos, Ashes_TileMap);
+                    if (cellTile != null && cellpos.y != AshesCellPosition[i].y)
+                    {
+                        AshesCellPosition[i] = cellpos;
+                        break;
+                    }
+                }
+
+            }
+        }
+    }
+
+    public void AshesPrevision()
+    {
+        for (int i = 0; i < AshesCellPosition.Length; i++)
+        {
+            bool[] canmove = new bool[4];
+            Vector3Int[] nextpos = new Vector3Int[4];
+            (canmove, nextpos) = CanTilesMoveAdjacent(AshesCellPosition[i]);
+
+            for (int j = 0; j < nextpos.Length; j++)
+            {
+                if (canmove[j])
+                {
+                    Cursor_TileMap.SetTile(nextpos[j], cursor[1]);
+                }
+            }
+        }
+    }
+    #endregion
+
+    #region Dynamics
+
+    void KillCitizens()
+    {
+        for (int i = 0; i < AshesCellPosition.Length; i++)
+        {
+            (TileBase tile, Vector3Int cellpos) = GetTileAtWorldPosition(AshesCellPosition[i],Dynamic_TileMap);
+            if (TileExistInArray(tile, Citizens))
+            {
+                Dynamic_TileMap.SetTile(cellpos, null);
+                Debug.Log("Citizens Die on :" + cellpos);
+
+            }
+        }
+    }
+
+    void KillHouses()
+    {
+        for (int row = 0;row < AshesCellPosition.Length; row++)
+        {
+            for (int col = 0; col < AshesCellPosition.Length; col++)
+            {
+                Vector3Int mapPos = new Vector3Int(-6+row,4-col,0);
+                (TileBase dynamic, _) = GetTileAtWorldPosition(mapPos,Dynamic_TileMap);
+
+                if (TileExistInArray(dynamic, House))
+                {
+                    int allboolean = 0;
+                    (bool[] canMove, _) = CanTilesMoveAdjacent(mapPos);
+                    foreach (bool boolean in canMove) 
+                    {
+                        if (!boolean) 
+                        {
+                           
+                            allboolean++;
+                        }
+                    }
+
+                    if (allboolean == 4) 
+                    {
+                        Debug.Log("HOUSE IN " + mapPos + "is surronded by ashes");
+                        Dynamic_TileMap.SetTile(mapPos,null);
+                        Ashes_TileMap.SetTile(mapPos, Ashes[0]);
+                    }
+                }
+            }
+        }
+        
+        // y = 4
+    }
+    
+    void FireExpension()
+    {
+        int RandomExpension = UnityEngine.Random.Range(0,3);
+
+        
+    }
+
+    #endregion
+
+    
+    #region Tile utility function
     public (TileBase, Vector3Int) GetTileAtWorldPosition(Vector3 worldPos, Tilemap MapWanted)
     {
         Vector3Int cellPosition = MapWanted.WorldToCell(worldPos);
         TileBase tile = MapWanted.GetTile(cellPosition);
         return (tile, cellPosition);
     }
-
     public bool TileExistInArray(TileBase tile, Array array)
     {
         foreach (TileBase item in array)
@@ -127,7 +282,6 @@ public class GameManager : MonoBehaviour
 
         return false;
     }
-
     (bool[], Vector3Int[])CanTilesMoveAdjacent(Vector3Int cellPos)
     {
         ///<summary>
@@ -138,24 +292,34 @@ public class GameManager : MonoBehaviour
         bool[] CanMoveAdjacent = new bool[4] {false,false,false,false};
         Vector3Int[] NextTilePosition = new Vector3Int[4] {cellPos+Vector3Int.left,cellPos+Vector3Int.down,cellPos+Vector3Int.right,cellPos+Vector3Int.up };
 
+        //int MapsLimite = 6;
+
+
         for (int i = 0; i < 4; i++)
         {
-            TileBase AshesTile, HouseTile = null;
+            TileBase AshesTile = null, HouseTile = null,FloorTile = null;
             (AshesTile, _) = GetTileAtWorldPosition(NextTilePosition[i], Ashes_TileMap);
             (HouseTile, _) = GetTileAtWorldPosition(NextTilePosition[i], Dynamic_TileMap);
-            if (AshesTile == null && !TileExistInArray(HouseTile, House))
+            (FloorTile, _) = GetTileAtWorldPosition(NextTilePosition[i], Tile_TileMap);
+
+            // && NextTilePosition[i].x > -MapsLimite && NextTilePosition[i].x <= (MapsLimite)
+            if (FloorTile != null)
             {
-                CanMoveAdjacent[i] = true;
-            }
-            else
-            {
-                CanMoveAdjacent[i] = false;
+                if (AshesTile == null && !TileExistInArray(HouseTile, House))
+                {
+                    CanMoveAdjacent[i] = true;
+                }
+                else
+                {
+                    CanMoveAdjacent[i] = false;
+                }
             }
 
         }
         return (CanMoveAdjacent, NextTilePosition);
     }
 
+    #endregion
 
     #endregion
 }
