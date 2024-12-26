@@ -3,6 +3,7 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.Tilemaps;
 using System;
+using UnityEngine.UI;
 
 
 public class GameManager : MonoBehaviour
@@ -13,11 +14,15 @@ public class GameManager : MonoBehaviour
     [SerializeField]int PAMax;
     public int PALeft;
     bool IsPlayerTurn;
+    public bool UnfusionActive {  get; private set; }
+    public int CitizensSaved;
 
 
     [Header("TMPro Ref", order = 2)]
     [SerializeField] TextMeshProUGUI PA_Text;
     [SerializeField] TextMeshProUGUI Turn_Text;
+    [SerializeField] TextMeshProUGUI Boat_Text;
+    [SerializeField] GameObject Unfusion_Button;
 
     [Header("TileMap", order = 3)]
     public Tilemap Tile_TileMap;
@@ -30,11 +35,20 @@ public class GameManager : MonoBehaviour
     public TileBase[] Citizens;
     public TileBase[] Holes;
     public TileBase[] Floors;
+    public TileBase[] Waters;
     public TileBase[] Ashes;
     public TileBase[] cursor;
     public TileBase[] Drain;
+    public TileBase[] NarrowStreet;
+    public TileBase[] Gate;
 
     [SerializeField]Vector3Int[] AshesCellPosition = new Vector3Int[12];
+
+    [Header("Boat")]
+    [SerializeField] Vector3Int BoatPosition;
+    public int PassagersOnBoat;
+    public TileBase BoatTiles;
+    bool IsBoatOnMap = true;
 
     private void Start()
     {
@@ -71,19 +85,29 @@ public class GameManager : MonoBehaviour
 
     #region Button
 
+    //Boat
     public void Spell1()
     {
-        if(PALeft >= 1)
+        if (PALeft >= 1)
         {
             PALeft -= 1;
+            if (IsBoatOnMap)
+            {
+                Dynamic_TileMap.SetTile(BoatPosition,null);
+                CitizensSaved += PassagersOnBoat;
+                PassagersOnBoat = 0;
+            }
+            else
+            {
+                Dynamic_TileMap.SetTile(BoatPosition,BoatTiles);
+            }
+
+            IsBoatOnMap = !IsBoatOnMap;
             UpdateText();
-        }
-        else
-        {
-            Debug.Log("pas assez de PA" + PALeft);
         }
     }
 
+    //Rain
     public void Spell2() 
     {
         if (PALeft >= 2)
@@ -96,6 +120,16 @@ public class GameManager : MonoBehaviour
             Debug.Log("pas assez de PA :" + PALeft);
             
         }
+    }
+
+    //Unfusion
+    public void Speel3()
+    {
+        UnfusionActive = !UnfusionActive;
+
+        Color color = UnfusionActive ?  Color.green : Color.red ;
+        Debug.Log("unfusion == " + UnfusionActive);
+        Unfusion_Button.GetComponent<Image>().color = color;
     }
     public void EndOfTurn()
     {
