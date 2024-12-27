@@ -8,15 +8,15 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
-    [Header("Turn and PA",order = 1)]
-    [SerializeField]int TurnMax;
+    [Header("Turn and PA", order = 1)]
+    [SerializeField] int TurnMax;
     int TurnLeft;
-    [SerializeField]int PAMax;
+    [SerializeField] int PAMax;
     public int PALeft;
     bool IsPlayerTurn;
-    public bool UnfusionActive {  get; private set; }
+    public bool UnfusionActive { get; private set; }
     public int CitizensSaved;
-
+    public int RainRaduis;
 
     [Header("TMPro Ref", order = 2)]
     [SerializeField] TextMeshProUGUI PA_Text;
@@ -29,8 +29,9 @@ public class GameManager : MonoBehaviour
     public Tilemap Dynamic_TileMap;
     public Tilemap Cursor_TileMap;
     public Tilemap Ashes_TileMap;
+    public Tilemap Rain_TileMap;
 
-    [Header("Tile")] 
+    [Header("Tile")]
     public TileBase[] House;
     public TileBase[] Citizens;
     public TileBase[] Holes;
@@ -38,17 +39,23 @@ public class GameManager : MonoBehaviour
     public TileBase[] Waters;
     public TileBase[] Ashes;
     public TileBase[] cursor;
+    public TileBase[] Fire;
     public TileBase[] Drain;
     public TileBase[] NarrowStreet;
     public TileBase[] Gate;
 
-    [SerializeField]Vector3Int[] AshesCellPosition = new Vector3Int[12];
+    [SerializeField] Vector3Int[] AshesCellPosition = new Vector3Int[12];
 
     [Header("Boat")]
     [SerializeField] Vector3Int BoatPosition;
     public int PassagersOnBoat;
     public TileBase BoatTiles;
     bool IsBoatOnMap = true;
+
+    [Header("Rain")]
+    public Vector3Int[] RainPosition = new Vector3Int[9];
+    public bool RainActive { get; private set; }
+    
 
     private void Start()
     {
@@ -112,14 +119,11 @@ public class GameManager : MonoBehaviour
     {
         if (PALeft >= 2)
         {
-            PALeft -= 2;
+           
+            RainActive = !RainActive;
             UpdateText();
         }
-        else
-        {
-            Debug.Log("pas assez de PA :" + PALeft);
-            
-        }
+        
     }
 
     //Unfusion
