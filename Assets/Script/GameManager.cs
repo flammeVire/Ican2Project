@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine.Tilemaps;
 using System;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 
 public class GameManager : MonoBehaviour
@@ -45,6 +46,7 @@ public class GameManager : MonoBehaviour
     public TileBase[] Gate;
 
     [SerializeField] Vector3Int[] AshesCellPosition = new Vector3Int[12];
+    [SerializeField] List<Vector3Int> FirePosition = new List<Vector3Int>();
 
     [Header("Boat")]
     [SerializeField] Vector3Int BoatPosition;
@@ -294,11 +296,45 @@ public class GameManager : MonoBehaviour
         // y = 4
     }
     
-    void FireExpension()
+    void FireExpension(Vector3Int cellPos)
     {
         int RandomExpension = UnityEngine.Random.Range(0,3);
-
         
+        switch (RandomExpension)
+        {
+            case 0:
+                canFireExpand(cellPos + Vector3Int.down);
+                break;
+
+            case 1:
+                canFireExpand(cellPos + Vector3Int.left);
+                break;
+
+            case 2:
+                canFireExpand(cellPos + Vector3Int.right);
+                break;
+
+            case 3:
+                canFireExpand(cellPos + Vector3Int.up);
+                break;
+        }
+    }
+
+    bool canFireExpand(Vector3Int nextPosition)
+    {
+        (TileBase tile,_) = GetTileAtWorldPosition(nextPosition, Tile_TileMap);
+        (TileBase dynamics,_) = GetTileAtWorldPosition(nextPosition, Dynamic_TileMap);
+        if (TileExistInArray(tile,Floors) || TileExistInArray(tile,Gate))
+        {
+            if (!TileExistInArray(dynamics, House) || !TileExistInArray(dynamics,Fire))
+            {
+                Debug.Log("fire can expand");
+                return true;
+            }
+            
+        }
+        Debug.Log("fire can't expand");
+        return false;
     }
 
     #endregion
