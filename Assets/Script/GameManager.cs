@@ -18,7 +18,6 @@ public class GameManager : MonoBehaviour
     public bool UnfusionActive { get; private set; }
     public int CitizensSaved;
     public int RainRaduis;
-
     [Header("TMPro Ref", order = 2)]
     [SerializeField] TextMeshProUGUI PA_Text;
     [SerializeField] TextMeshProUGUI Turn_Text;
@@ -58,6 +57,7 @@ public class GameManager : MonoBehaviour
     public Vector3Int[] RainPosition = new Vector3Int[9];
     public bool RainActive { get; private set; }
     
+    Dictionary<Vector2Int,FireExpansion> fireDictionary;
 
     private void Start()
     {
@@ -67,8 +67,6 @@ public class GameManager : MonoBehaviour
         PALeft = PAMax;
         StartCoroutine(PlayerTurn());
     }
-
-
     IEnumerator PlayerTurn()
     {
         AshesPrevision();
@@ -292,49 +290,31 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
-        
-        // y = 4
     }
     
-    void FireExpension(Vector3Int cellPos)
+    //Check if tile map are available for fire 
+    bool CanAddFireOnMap(Vector3Int cellpos)
     {
-        int RandomExpension = UnityEngine.Random.Range(0,3);
-        
-        switch (RandomExpension)
+        TileBase D_tile = Dynamic_TileMap.GetTile(cellpos);
+        TileBase T_tile = Tile_TileMap.GetTile(cellpos);
+        if (TileExistInArray(D_tile, House) || TileExistInArray(T_tile, Drain) || TileExistInArray(D_tile, Fire))
         {
-            case 0:
-                canFireExpand(cellPos + Vector3Int.down);
-                break;
-
-            case 1:
-                canFireExpand(cellPos + Vector3Int.left);
-                break;
-
-            case 2:
-                canFireExpand(cellPos + Vector3Int.right);
-                break;
-
-            case 3:
-                canFireExpand(cellPos + Vector3Int.up);
-                break;
+            return false;
         }
+        return true;
     }
 
-    bool canFireExpand(Vector3Int nextPosition)
+    
+
+    //check if fire can spawn on nextpos
+    void FireExpand()
     {
-        (TileBase tile,_) = GetTileAtWorldPosition(nextPosition, Tile_TileMap);
-        (TileBase dynamics,_) = GetTileAtWorldPosition(nextPosition, Dynamic_TileMap);
-        if (TileExistInArray(tile,Floors) || TileExistInArray(tile,Gate))
+        foreach(var fires in fireDictionary)
         {
-            if (!TileExistInArray(dynamics, House) || !TileExistInArray(dynamics,Fire))
-            {
-                Debug.Log("fire can expand");
-                return true;
-            }
-            
+           // check si position wanted == next position ET position disponible
+           // si position pas dispo, check si autre direction dispo
+            //si aucun, ne fait rien
         }
-        Debug.Log("fire can't expand");
-        return false;
     }
 
     #endregion
