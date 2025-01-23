@@ -1,4 +1,4 @@
-using System.Collections;
+ using System.Collections;
 using UnityEngine;
 using TMPro;
 using UnityEngine.Tilemaps;
@@ -45,8 +45,6 @@ public class GameManager : MonoBehaviour
     public TileBase[] Gate;
 
     [SerializeField] Vector3Int[] AshesCellPosition = new Vector3Int[12];
-    [SerializeField] List<Vector3Int> FirePosition = new List<Vector3Int>();
-
     [Header("Boat")]
     [SerializeField] Vector3Int BoatPosition;
     public int PassagersOnBoat;
@@ -56,8 +54,8 @@ public class GameManager : MonoBehaviour
     [Header("Rain")]
     public Vector3Int[] RainPosition = new Vector3Int[9];
     public bool RainActive { get; private set; }
-    
-    Dictionary<Vector2Int,FireExpansion> fireDictionary;
+    public List<FireExpansion> fireList;
+
 
     private void Start()
     {
@@ -66,6 +64,8 @@ public class GameManager : MonoBehaviour
         TurnLeft = TurnMax;
         PALeft = PAMax;
         StartCoroutine(PlayerTurn());
+
+
     }
     IEnumerator PlayerTurn()
     {
@@ -83,6 +83,7 @@ public class GameManager : MonoBehaviour
     IEnumerator IaTurn()
     {
         yield return null;
+        FireExpand();
         AshesMovement();
         KillCitizens();
         KillHouses();
@@ -292,6 +293,8 @@ public class GameManager : MonoBehaviour
         }
     }
     
+
+
     //Check if tile map are available for fire 
     bool CanAddFireOnMap(Vector3Int cellpos)
     {
@@ -304,22 +307,112 @@ public class GameManager : MonoBehaviour
         return true;
     }
 
-    
-
     //check if fire can spawn on nextpos
     void FireExpand()
     {
-        foreach(var fires in fireDictionary)
+        List<FireExpansion> fireListClone = new List<FireExpansion>(fireList);
+        foreach (FireExpansion fires in fireListClone)
         {
-           // check si position wanted == next position ET position disponible
-           // si position pas dispo, check si autre direction dispo
-            //si aucun, ne fait rien
+            fires.nextDirectionWanted = fires.nextDirectionOrder[0];
+            for (int i = 0; i < fires.haveAlreadyExpand.Length; i++)
+            {
+                //feu ne s'est pas deja rependu et la direction voulu est la bonne
+                if (!fires.haveAlreadyExpand[i])
+                {
+                    fires.nextDirectionWanted = fires.nextDirectionOrder[i];
+                    //cas fire peut se propager
+                    if (CanAddFireOnMap(FireWantedPosition(fires))) 
+                    {
+                        fires.haveAlreadyExpand[i] = true;
+                        SetCloneFireToList(fires);
+                        break;
+                    }
+                    else
+                    {
+                        Debug.Log("fail");
+                    }
+                  
+                    
+                    
+                }
+            }
         }
     }
 
-    #endregion
+
+    Vector3Int FireWantedPosition(FireExpansion fire)
+    {
+        Vector3Int nextpos = new Vector3Int();
+        switch (fire.nextDirectionWanted)
+        {
+            case FireExpansion.direction.North:
+                nextpos = fire.Position + Vector3Int.up;
+                break;
+            case FireExpansion.direction.South:
+                nextpos = fire.Position + Vector3Int.down;
+                break;
+            case FireExpansion.direction.West:
+                nextpos = fire.Position + Vector3Int.left;
+                break;
+            case FireExpansion.direction.Est:
+                nextpos = fire.Position + Vector3Int.right;
+                break;
+        }
+        return nextpos;
+    }
+
+
+    void SetCloneFireToList(FireExpansion fire)
+    {
+        FireExpansion clone = Instantiate(fire);
+        clone.Position = FireWantedPosition(fire);
+        for (int i = 0; i < clone.haveAlreadyExpand.Length; i++)
+        {
+            clone.haveAlreadyExpand[i] = false;
+        }
+        ChangeArrayDirection(clone);
+
+        fireList.Add(clone);
+        Dynamic_TileMap.SetTile(FireWantedPosition(fire), Fire[0]);
+    }
+
+    void ChangeArrayDirection(FireExpansion fire)
+    {
+        if (fire.nextDirectionOrder[0] == FireExpansion.direction.North)
+        {
+            fire.nextDirectionOrder[0] = FireExpansion.direction.Est;
+            fire.nextDirectionOrder[2] = FireExpansion.direction.South;
+            fire.nextDirectionOrder[1] = FireExpansion.direction.West;
+            fire.nextDirectionOrder[3] = FireExpansion.direction.North;
+        }
+        else if (fire.nextDirectionOrder[0] == FireExpansion.direction.South) 
+        {
+            fire.nextDirectionOrder[0] = FireExpansion.direction.West;
+            fire.nextDirectionOrder[1] = FireExpansion.direction.Est;
+            fire.nextDirectionOrder[2] = FireExpansion.direction.North;
+            fire.nextDirectionOrder[3] = FireExpansion.direction.South;
+        }
+        else if (fire.nextDirectionOrder[0] == FireExpansion.direction.West)
+        {
+            fire.nextDirectionOrder[0] = FireExpansion.direction.South;
+            fire.nextDirectionOrder[1] = FireExpansion.direction.North;
+            fire.nextDirectionOrder[2] = FireExpansion.direction.Est;
+            fire.nextDirectionOrder[3] = FireExpansion.direction.West;
+        }
+        else if (fire.nextDirectionOrder[0] == FireExpansion.direction.Est) 
+        {
+            fire.nextDirectionOrder[0] = FireExpansion.direction.North;
+            fire.nextDirectionOrder[1] = FireExpansion.direction.South;
+            fire.nextDirectionOrder[2] = FireExpansion.direction.West;
+            fire.nextDirectionOrder[3] = FireExpansion.direction.Est;
+        }
+        fire.nextDirectionWanted = fire.nextDirectionOrder[0];
+    }
 
     
+    #endregion
+
+
     #region Tile utility function
     public (TileBase, Vector3Int) GetTileAtWorldPosition(Vector3 worldPos, Tilemap MapWanted)
     {
