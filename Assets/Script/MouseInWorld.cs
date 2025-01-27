@@ -12,6 +12,8 @@ public class MouseInWorld : MonoBehaviour
     public Vector2 CursorOnScreen;
     TileBase selected = null;
     Vector2 selectedPosition;
+    [SerializeField]Vector3Int[] DrainPosition;
+    
 
     TileBase[] Rain_Dynamicstiles = new TileBase[9];
     bool cancelRain = false;
@@ -50,7 +52,7 @@ public class MouseInWorld : MonoBehaviour
                 Vector3Int tilePos;
                 (selected, tilePos) = gameManager.GetTileAtWorldPosition(CursorOnScreen, gameManager.Dynamic_TileMap);
 
-                if (selected != gameManager.BoatTiles)
+                if (selected != gameManager.BoatTiles && !gameManager.TileExistInArray(selected,gameManager.Fire))
                 {
                     selectedPosition = new Vector2(tilePos.x, tilePos.y);
 
@@ -59,7 +61,7 @@ public class MouseInWorld : MonoBehaviour
                         gameManager.Cursor_TileMap.SetTile(tilePos, gameManager.cursor[0]);
                     }
 
-                    Debug.Log(selected);
+                    //Debug.Log(selected);
                     Debug.Log(selectedPosition);
                 }
                 else
@@ -131,6 +133,7 @@ public class MouseInWorld : MonoBehaviour
                         gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)cellPos.x, (int)cellPos.y, 0), selected);
                         gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), null);
                         gameManager.PALeft -= 1;
+                        gameManager.PaForRain = 1;
                         gameManager.UpdateText();
                     }
                     //narrowStreet
@@ -219,22 +222,23 @@ public class MouseInWorld : MonoBehaviour
                     }
                     gameManager.Speel3();
                 }
-                /*
+                
                 else if (dynamicTile != null && IsTilesAdjacent(cellPos) && AshesTiles == null)
                 {
                     //cas citoyens sur citoyens
                     if (gameManager.TileExistInArray(dynamicTile, gameManager.Citizens))
                     {
                         gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)cellPos.x, (int)cellPos.y, 0), gameManager.Citizens[HowManyCitizensOnTiles(tileSelected, dynamicTile) - 1]);
-                        gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), null);
+                        gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), gameManager.Citizens[HowManyCitizensOnTiles(tileSelected, dynamicTile) + 1]);
                         gameManager.PALeft -= 1;
                         gameManager.UpdateText();
                     }
-                }*/
+                }
             }
         }
 
 
+        CitizensOnDrain();
         gameManager.Cursor_TileMap.SetTile(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), null);
         gameManager.AshesPrevision();
         selected = null;
@@ -272,6 +276,14 @@ public class MouseInWorld : MonoBehaviour
 
     void InputRain()
     {
+        if (Input.GetMouseButtonDown(1))
+        {
+            cancelRain = true;
+            Debug.Log("cancel rain");
+            
+                gameManager.Spell2();
+            
+        }
         if (Input.GetMouseButtonDown(0))
         {
             for (int i = 0; i < Rain_Dynamicstiles.Length; i++)
@@ -291,14 +303,25 @@ public class MouseInWorld : MonoBehaviour
             {
                 for (int i = 0; i < Rain_Dynamicstiles.Length; i++)
                 {
+
                     if (gameManager.TileExistInArray(Rain_Dynamicstiles[i], gameManager.Fire))
                     {
+                        for (int j = gameManager.fireList.Count - 1; j >= 0; j--)
+                        {
+                            if (gameManager.fireList[j].Position == gameManager.RainPosition[i])
+                            {
+                                gameManager.fireList.RemoveAt(j);
+                            }
+                        }
                         gameManager.Dynamic_TileMap.SetTile(gameManager.RainPosition[i], null);
                     }
                     gameManager.Rain_TileMap.SetTile(gameManager.RainPosition[i], null);
+                    
                 }
+
+
                 gameManager.Spell2();
-                gameManager.PALeft -= 2;
+                gameManager.PALeft -= gameManager.PaForRain;
                 gameManager.UpdateText();
             }
             else
@@ -365,6 +388,24 @@ public class MouseInWorld : MonoBehaviour
         }
         Debug.Log("total of citizens selected = " + number);
         return number;
+    }
+
+    void CitizensOnDrain()
+    {
+        foreach (Vector3Int pos in DrainPosition) 
+        {
+            (TileBase D_tiles, _) = gameManager.GetTileAtWorldPosition(pos, gameManager.Dynamic_TileMap);
+            if (gameManager.TileExistInArray(D_tiles, gameManager.Citizens))
+            {
+                gameManager.PaForRain = 1;
+                Debug.Log("is on drain");
+                break;
+            }
+            
+            
+                gameManager.PaForRain = 2;
+            
+        }
     }
 
 }

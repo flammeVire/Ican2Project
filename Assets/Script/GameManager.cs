@@ -10,11 +10,12 @@ using System.Collections.Generic;
 public class GameManager : MonoBehaviour
 {
     [Header("Turn and PA", order = 1)]
-    [SerializeField] int TurnMax;
-    int TurnLeft;
+    int Turn;
     [SerializeField] int PAMax;
     public int PALeft;
     bool IsPlayerTurn;
+    public SoundManagement Sound;
+
     public bool UnfusionActive { get; private set; }
     public int CitizensSaved;
     public int RainRaduis;
@@ -54,21 +55,29 @@ public class GameManager : MonoBehaviour
     [Header("Rain")]
     public Vector3Int[] RainPosition = new Vector3Int[9];
     public bool RainActive { get; private set; }
+    public int PaForRain = 2;
+
+    [Header("Attack")]
     public List<FireExpansion> fireList;
+    public int turnForFireAtk;
+    public List<Vector3Int> VoidPosition;
+    public int turnForVoidAtk;
 
 
     private void Start()
     {
         AshesFirstPosition();
 
-        TurnLeft = TurnMax;
+        Turn = 1;
         PALeft = PAMax;
         StartCoroutine(PlayerTurn());
-
+        StartCoroutine(FireAttack());
+        StartCoroutine(VoidAttack());
 
     }
     IEnumerator PlayerTurn()
     {
+        //Sound.PlaySound(Sound.MyTurnSound, Sound.SFXSource);
         AshesPrevision();
         yield return null;
         PALeft = PAMax;
@@ -76,19 +85,44 @@ public class GameManager : MonoBehaviour
         UpdateText();
         yield return new WaitUntil(() => PALeft <= 0);
         yield return new WaitForSeconds(0.5f);
-        TurnLeft -= 1;
         IsPlayerTurn = false;
         StartCoroutine(IaTurn());
     }
     IEnumerator IaTurn()
     {
-        yield return null;
-        FireExpand();
+        //Sound.PlaySound(Sound.IATurnSound, Sound.SFXSource);
+        yield return new WaitForSeconds(1f);
         AshesMovement();
         KillCitizens();
         KillHouses();
+        Turn += 1;
+        if (Turn >= turnForFireAtk)
+        {
+            FireExpand();
+        }
         StartCoroutine (PlayerTurn());
-       
+    }
+
+    IEnumerator FireAttack()
+    {
+        yield return new WaitUntil(() => Turn == turnForFireAtk);
+        for (int i = 0; i < fireList.Count; i++) 
+        {
+            if (CanAddFireOnMap(fireList[i].Position))
+            {
+                Dynamic_TileMap.SetTile(fireList[i].Position, Fire[0]);
+            }
+        }
+    }
+
+    IEnumerator VoidAttack()
+    {
+        yield return new WaitUntil(() => Turn == turnForVoidAtk);
+        for(int i = 0; i < VoidPosition.Count; i++)
+        {
+            Dynamic_TileMap.SetTile(VoidPosition[i],null);
+            Tile_TileMap.SetTile(VoidPosition[i], Holes[0]);
+        }
     }
 
     #region Button
@@ -104,10 +138,12 @@ public class GameManager : MonoBehaviour
                 Dynamic_TileMap.SetTile(BoatPosition,null);
                 CitizensSaved += PassagersOnBoat;
                 PassagersOnBoat = 0;
+                Sound.PlaySound(Sound.BoatLeavingSound,Sound.SFXSource);
             }
             else
             {
                 Dynamic_TileMap.SetTile(BoatPosition,BoatTiles);
+                Sound.PlaySound(Sound.BoatComingSound,Sound.SFXSource);
             }
 
             IsBoatOnMap = !IsBoatOnMap;
@@ -118,9 +154,9 @@ public class GameManager : MonoBehaviour
     //Rain
     public void Spell2() 
     {
-        if (PALeft >= 2)
+        Debug.Log("Pa for rain = " + PaForRain);
+        if (PALeft >= PaForRain)
         {
-           
             RainActive = !RainActive;
             UpdateText();
         }
@@ -149,7 +185,7 @@ public class GameManager : MonoBehaviour
     {
         PA_Text.text = "PA: " + PALeft;
         PA_Text.text = "PA: " + PALeft;
-        Turn_Text.text = "Turn left: " + TurnLeft;
+        Turn_Text.text = "tour écoulé: " + Turn;
     }
 
     #endregion
@@ -300,7 +336,8 @@ public class GameManager : MonoBehaviour
     {
         TileBase D_tile = Dynamic_TileMap.GetTile(cellpos);
         TileBase T_tile = Tile_TileMap.GetTile(cellpos);
-        if (TileExistInArray(D_tile, House) || TileExistInArray(T_tile, Drain) || TileExistInArray(D_tile, Fire))
+        
+        if (T_tile == null || TileExistInArray(D_tile, House) || TileExistInArray(T_tile, Drain) || TileExistInArray(D_tile, Fire) || TileExistInArray(T_tile,Waters))
         {
             return false;
         }
@@ -331,9 +368,6 @@ public class GameManager : MonoBehaviour
                     {
                         Debug.Log("fail");
                     }
-                  
-                    
-                    
                 }
             }
         }
@@ -431,15 +465,11 @@ public class GameManager : MonoBehaviour
     }
     (bool[], Vector3Int[])CanTilesMoveAdjacent(Vector3Int cellPos)
     {
-        ///<summary>
-        /// renvoye si la tiles peux bouger en a GAUCHE, BAS, DROITE, HAUT et la position d'arrivé
-        /// </summary>
-
         //gauche bas droite gauche
         bool[] CanMoveAdjacent = new bool[4] {false,false,false,false};
         Vector3Int[] NextTilePosition = new Vector3Int[4] {cellPos+Vector3Int.left,cellPos+Vector3Int.down,cellPos+Vector3Int.right,cellPos+Vector3Int.up };
 
-        //int MapsLimite = 6;
+       
 
 
         for (int i = 0; i < 4; i++)
@@ -449,7 +479,6 @@ public class GameManager : MonoBehaviour
             (HouseTile, _) = GetTileAtWorldPosition(NextTilePosition[i], Dynamic_TileMap);
             (FloorTile, _) = GetTileAtWorldPosition(NextTilePosition[i], Tile_TileMap);
 
-            // && NextTilePosition[i].x > -MapsLimite && NextTilePosition[i].x <= (MapsLimite)
             if (FloorTile != null)
             {
                 if (AshesTile == null && !TileExistInArray(HouseTile, House))
