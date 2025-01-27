@@ -188,6 +188,7 @@ public class MouseInWorld : MonoBehaviour
             else if (gameManager.UnfusionActive && TotalOfCitizensSelected(tileSelected) != 0)
             {
                 Debug.Log("Move unfuiosn");
+                //cas sol
                 if (dynamicTile == null && IsTilesAdjacent(cellPos) && AshesTiles == null)
                 {
                     Debug.Log("dynamic tile == null");
@@ -223,15 +224,19 @@ public class MouseInWorld : MonoBehaviour
                     gameManager.Speel3();
                 }
                 
+                //cas dynamics
                 else if (dynamicTile != null && IsTilesAdjacent(cellPos) && AshesTiles == null)
                 {
                     //cas citoyens sur citoyens
                     if (gameManager.TileExistInArray(dynamicTile, gameManager.Citizens))
                     {
-                        gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)cellPos.x, (int)cellPos.y, 0), gameManager.Citizens[HowManyCitizensOnTiles(tileSelected, dynamicTile) - 1]);
-                        gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), gameManager.Citizens[HowManyCitizensOnTiles(tileSelected, dynamicTile) + 1]);
-                        gameManager.PALeft -= 1;
-                        gameManager.UpdateText();
+                        // recuperer combien de citoyens sur la case de départ
+                        // recuperer combien de citoyens sur la case d'arriver
+
+                        //enlever -1 a la case de départ
+                        //ajouter +1 a la case d'arrivé
+
+
                     }
                 }
             }
@@ -353,20 +358,20 @@ public class MouseInWorld : MonoBehaviour
 
         return false;
     }
-    int HowManyCitizensOnTiles(TileBase citizenSelected, TileBase citizenTile)
+    int HowManyCitizensOnTiles(TileBase CitizenTile_Start, TileBase CitizenTile_End)
     {
         int x, y;
 
         for (x = 1; x < gameManager.Citizens.Length + 1; x++)
         {
-            if (gameManager.Citizens[x - 1] == citizenSelected)
+            if (gameManager.Citizens[x - 1] == CitizenTile_Start)
             {
                 break;
             }
         }
         for (y = 1; y < gameManager.Citizens.Length + 1; y++)
         {
-            if (gameManager.Citizens[y - 1] == citizenTile)
+            if (gameManager.Citizens[y - 1] == CitizenTile_End)
             {
                 break;
             }
@@ -401,12 +406,8 @@ public class MouseInWorld : MonoBehaviour
                 Debug.Log("is on drain");
                 break;
             }
-            
-            
-                gameManager.PaForRain = 2;
-            
+             gameManager.PaForRain = 2;
         }
     }
-
 }
 
