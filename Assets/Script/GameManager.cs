@@ -77,7 +77,7 @@ public class GameManager : MonoBehaviour
     }
     IEnumerator PlayerTurn()
     {
-        //Sound.PlaySound(Sound.MyTurnSound, Sound.SFXSource);
+        Sound.PlaySound(Sound.MyTurnSound, Sound.SFXSource);
         AshesPrevision();
         yield return null;
         PALeft = PAMax;
@@ -90,7 +90,7 @@ public class GameManager : MonoBehaviour
     }
     IEnumerator IaTurn()
     {
-        //Sound.PlaySound(Sound.IATurnSound, Sound.SFXSource);
+        Sound.PlaySound(Sound.IATurnSound, Sound.SFXSource);
         yield return new WaitForSeconds(1f);
         AshesMovement();
         KillCitizens();
