@@ -38,14 +38,15 @@ public class GameManager : MonoBehaviour
     public TileBase[] Holes;
     public TileBase[] Floors;
     public TileBase[] Waters;
+    public TileBase BackAsh;
     public TileBase[] Ashes;
-    public TileBase[] cursor;
     public TileBase[] Fire;
     public TileBase[] Drain;
     public TileBase[] NarrowStreet;
     public TileBase[] Gate;
-
     [SerializeField] Vector3Int[] AshesCellPosition = new Vector3Int[12];
+    [SerializeField] Vector3Int[] oldAshesCellPosition = new Vector3Int[12];
+
     [Header("Boat")]
     [SerializeField] Vector3Int BoatPosition;
     public int PassagersOnBoat;
@@ -63,6 +64,21 @@ public class GameManager : MonoBehaviour
     public List<Vector3Int> VoidPosition;
     public int turnForVoidAtk;
 
+    [Header("AnimationTile")]
+    public TileBase[] WaterTiles;
+    public float WaterDelay;
+    public TileBase[] DefaultCursor;
+    public TileBase[] RainCursor;
+    public TileBase[] AshCursor;
+    public TileBase[] FireCursor;
+    public float CursorDelay;
+    public float AshDelay;
+    public TileBase[] House1MovingStart;
+    public TileBase[] House1MovingEnd;
+    public float MovingDelay;
+
+    Coroutine[] OldAshCursorAnimation = new Coroutine[12];
+    Coroutine[] OldAshAnimation = new Coroutine[12];
 
     private void Start()
     {
@@ -73,7 +89,7 @@ public class GameManager : MonoBehaviour
         StartCoroutine(PlayerTurn());
         StartCoroutine(FireAttack());
         StartCoroutine(VoidAttack());
-
+        StartCoroutine(AnimateWater(WaterTiles, WaterDelay));
     }
     IEnumerator PlayerTurn()
     {
@@ -93,20 +109,37 @@ public class GameManager : MonoBehaviour
         //Sound.PlaySound(Sound.IATurnSound, Sound.SFXSource);
         yield return new WaitForSeconds(1f);
         AshesMovement();
-        KillCitizens();
         KillHouses();
-        Turn += 1;
+        GetLastAshes();
+        KillCitizens();
+        KillFire();
         if (Turn >= turnForFireAtk)
         {
             FireExpand();
+            FirePrevision();
         }
-        StartCoroutine (PlayerTurn());
+        Turn += 1;
+        //CheckIfAshIsTheLast();
+
+
+
+        StartCoroutine(PlayerTurn());
     }
 
     IEnumerator FireAttack()
     {
+        yield return new WaitUntil(() => Turn == turnForFireAtk-1);
+
+        for (int i = 0; i < fireList.Count; i++)
+        {
+            if (CanAddFireOnMap(fireList[i].Position))
+            {
+                Cursor_TileMap.SetTile(fireList[i].Position, FireCursor[0]);
+            }
+        }
+
         yield return new WaitUntil(() => Turn == turnForFireAtk);
-        for (int i = 0; i < fireList.Count; i++) 
+        for (int i = 0; i < fireList.Count; i++)
         {
             if (CanAddFireOnMap(fireList[i].Position))
             {
@@ -118,9 +151,9 @@ public class GameManager : MonoBehaviour
     IEnumerator VoidAttack()
     {
         yield return new WaitUntil(() => Turn == turnForVoidAtk);
-        for(int i = 0; i < VoidPosition.Count; i++)
+        for (int i = 0; i < VoidPosition.Count; i++)
         {
-            Dynamic_TileMap.SetTile(VoidPosition[i],null);
+            Dynamic_TileMap.SetTile(VoidPosition[i], null);
             Tile_TileMap.SetTile(VoidPosition[i], Holes[0]);
         }
     }
@@ -135,15 +168,15 @@ public class GameManager : MonoBehaviour
             PALeft -= 1;
             if (IsBoatOnMap)
             {
-                Dynamic_TileMap.SetTile(BoatPosition,null);
+                Dynamic_TileMap.SetTile(BoatPosition, null);
                 CitizensSaved += PassagersOnBoat;
                 PassagersOnBoat = 0;
-                Sound.PlaySound(Sound.BoatLeavingSound,Sound.SFXSource);
+                Sound.PlaySound(Sound.BoatLeavingSound, Sound.SFXSource);
             }
             else
             {
-                Dynamic_TileMap.SetTile(BoatPosition,BoatTiles);
-                Sound.PlaySound(Sound.BoatComingSound,Sound.SFXSource);
+                Dynamic_TileMap.SetTile(BoatPosition, BoatTiles);
+                Sound.PlaySound(Sound.BoatComingSound, Sound.SFXSource);
             }
 
             IsBoatOnMap = !IsBoatOnMap;
@@ -152,7 +185,7 @@ public class GameManager : MonoBehaviour
     }
 
     //Rain
-    public void Spell2() 
+    public void Spell2()
     {
         Debug.Log("Pa for rain = " + PaForRain);
         if (PALeft >= PaForRain)
@@ -160,7 +193,7 @@ public class GameManager : MonoBehaviour
             RainActive = !RainActive;
             UpdateText();
         }
-        
+
     }
 
     //Unfusion
@@ -168,7 +201,7 @@ public class GameManager : MonoBehaviour
     {
         UnfusionActive = !UnfusionActive;
 
-        Color color = UnfusionActive ?  Color.green : Color.red ;
+        Color color = UnfusionActive ? Color.green : Color.red;
         Debug.Log("unfusion == " + UnfusionActive);
         Unfusion_Button.GetComponent<Image>().color = color;
     }
@@ -196,12 +229,13 @@ public class GameManager : MonoBehaviour
     void AshesFirstPosition()
     {
         Vector3 ashescellpos = new Vector3(-5.5f, 4.5f, 0);
-        for (int i = 0; i < AshesCellPosition.Length; i++) 
+        for (int i = 0; i < AshesCellPosition.Length; i++)
         {
             (TileBase ashes, Vector3Int arrayPosition) = GetTileAtWorldPosition(ashescellpos, Ashes_TileMap);
             if (TileExistInArray(ashes, Ashes))
             {
                 AshesCellPosition[i] = arrayPosition;
+                OldAshAnimation[i] = StartCoroutine(AnimateOneTile(AshesCellPosition[i], Ashes, AshDelay, Ashes_TileMap));
                 ashescellpos += Vector3.right;
             }
             else
@@ -213,37 +247,40 @@ public class GameManager : MonoBehaviour
 
     void AshesMovement()
     {
-        Vector3Int[] ancienPosition = new Vector3Int[12];
-
-        // i = all ashes tiles
+        // i = relative pos.x in tilemap
         for (int i = 0; i < AshesCellPosition.Length; i++)
         {
-            ancienPosition[i] = AshesCellPosition[i];
+            //set older tiles
+            oldAshesCellPosition[i] = AshesCellPosition[i];
+            Cursor_TileMap.SetTile(oldAshesCellPosition[i], null);
 
+            //Get Expansion
             bool[] canmove = new bool[4];
             Vector3Int[] nextpos = new Vector3Int[4];
             (canmove, nextpos) = CanTilesMoveAdjacent(AshesCellPosition[i]);
-
 
             // j = all 4 direction
             for (int j = 0; j < nextpos.Length; j++)
             {
                 if (canmove[j])
                 {
-                    Ashes_TileMap.SetTile(nextpos[j], Ashes[0]);
-
+                    Ashes_TileMap.SetTile(nextpos[j], BackAsh);
+                    //if j expand to : DOWN
                     if (j == 1)
                     {
                         AshesCellPosition[i] = nextpos[j];
                     }
                 }
-
-
+            }
+            if (oldAshesCellPosition[i] != AshesCellPosition[i])
+            {
+                Ashes_TileMap.SetTile(oldAshesCellPosition[i], BackAsh);
             }
         }
-
+        /*
         for (int i = 0; i < AshesCellPosition.Length; i++)
         {
+
             if (ancienPosition[i] == AshesCellPosition[i])
             {
                 for (int collum = 0; collum < AshesCellPosition.Length; collum++)
@@ -257,6 +294,58 @@ public class GameManager : MonoBehaviour
                     }
                 }
 
+            }
+        }
+        */
+        
+        
+    }
+
+    void GetLastAshes()
+    {
+        Vector3Int[] pos = new Vector3Int[12];
+
+        //parcourir la map de bas en haut 
+        for (int i = 0; i < AshesCellPosition.Length; i++)
+        {
+            pos[i] = new Vector3Int(AshesCellPosition[i].x, -4, 0);
+            for (int Up = 0; Up < 9; Up++)
+            {
+                (TileBase A_Tile, Vector3Int A_Pos) = GetTileAtWorldPosition(pos[i], Ashes_TileMap);
+                // si on trouve une cendre c'est la bonne
+                if (A_Tile != null)
+                {
+                    AshesCellPosition[i] = A_Pos;
+                    break;
+                }
+                pos[i] += Vector3Int.up;
+            }
+        }
+        ChangeLastAshes();
+    }
+
+    void ChangeLastAshes()
+    {
+        
+        for (int i = 0; i < AshesCellPosition.Length; i++)
+        {
+            // Vérifier si la position a changé
+            if (oldAshesCellPosition[i] != AshesCellPosition[i])
+            {
+                Ashes_TileMap.SetTile(AshesCellPosition[i], Ashes[0]);
+                OldAshAnimation[i] = StartCoroutine(AnimateOneTile(AshesCellPosition[i], Ashes, AshDelay, Ashes_TileMap));
+            }
+        
+        
+            Vector3Int pos = AshesCellPosition[i];
+            for (int j = 0; j < 9; j++)
+            {
+                pos += Vector3Int.up;
+                (TileBase tile, _) = GetTileAtWorldPosition(pos, Ashes_TileMap);
+                if (tile != null)
+                {
+                    Ashes_TileMap.SetTile(pos, BackAsh);
+                }
             }
         }
     }
@@ -273,10 +362,22 @@ public class GameManager : MonoBehaviour
             {
                 if (canmove[j])
                 {
-                    Cursor_TileMap.SetTile(nextpos[j], cursor[1]);
+                    Cursor_TileMap.SetTile(nextpos[j], AshCursor[0]);
+                    OldAshCursorAnimation[i] = StartCoroutine(AnimateOneTile(nextpos[j], AshCursor, CursorDelay, Cursor_TileMap));
+                }
+                else
+                {
+                    OldAshCursorAnimation[i] = null;
                 }
             }
+            (TileBase A_Tile, _) = GetTileAtWorldPosition(AshesCellPosition[i], Ashes_TileMap);
+            if (A_Tile != null)
+            {
+                Cursor_TileMap.SetTile(AshesCellPosition[i], null);
+            }
+
         }
+
     }
     #endregion
 
@@ -291,46 +392,58 @@ public class GameManager : MonoBehaviour
             {
                 Dynamic_TileMap.SetTile(cellpos, null);
                 Debug.Log("Citizens Die on :" + cellpos);
-
             }
         }
+    }
+
+    void KillFire()
+    {
+        for (int i = 0; i < AshesCellPosition.Length; i++)
+        {
+            (TileBase tile, Vector3Int cellpos) = GetTileAtWorldPosition(AshesCellPosition[i], Dynamic_TileMap);
+            if (TileExistInArray(tile, Fire))
+            {
+                Dynamic_TileMap.SetTile(cellpos, null);
+                Debug.Log("Citizens Die on :" + cellpos);
+            }
+        }
+        FirePrevision();
     }
 
     void KillHouses()
     {
-        for (int row = 0;row < AshesCellPosition.Length; row++)
+        for (int lenght = 0; lenght < 12; lenght++) 
         {
-            for (int col = 0; col < AshesCellPosition.Length; col++)
+            for (int height = 0; height < 9; height++) 
             {
-                Vector3Int mapPos = new Vector3Int(-6+row,4-col,0);
-                (TileBase dynamic, _) = GetTileAtWorldPosition(mapPos,Dynamic_TileMap);
+                Vector3Int mapPos = new Vector3Int(-6 + lenght, - 4 + height, 0);
+                (TileBase D_tiles, _) = GetTileAtWorldPosition(mapPos, Dynamic_TileMap);
 
-                if (TileExistInArray(dynamic, House))
+                if (TileExistInArray(D_tiles, House))
                 {
                     int allboolean = 0;
                     (bool[] canMove, _) = CanTilesMoveAdjacent(mapPos);
-                    foreach (bool boolean in canMove) 
+                    foreach (bool boolean in canMove)
                     {
-                        if (!boolean) 
+                        if (!boolean)
                         {
-                           
                             allboolean++;
                         }
                     }
-
-                    if (allboolean == 4) 
+                    if (allboolean == 4)
                     {
-                        Debug.Log("HOUSE IN " + mapPos + "is surronded by ashes");
-                        Dynamic_TileMap.SetTile(mapPos,null);
-                        Ashes_TileMap.SetTile(mapPos, Ashes[0]);
+                        Dynamic_TileMap.SetTile(mapPos, null);
+                        Ashes_TileMap.SetTile(mapPos, BackAsh);
+                        AshesCellPosition[lenght] = mapPos;
                     }
                 }
             }
         }
+        
     }
-    
 
-
+    /// need to fix
+    #region fire
     //Check if tile map are available for fire 
     bool CanAddFireOnMap(Vector3Int cellpos)
     {
@@ -373,7 +486,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-
     Vector3Int FireWantedPosition(FireExpansion fire)
     {
         Vector3Int nextpos = new Vector3Int();
@@ -395,7 +507,6 @@ public class GameManager : MonoBehaviour
         return nextpos;
     }
 
-
     void SetCloneFireToList(FireExpansion fire)
     {
         FireExpansion clone = Instantiate(fire);
@@ -408,6 +519,7 @@ public class GameManager : MonoBehaviour
 
         fireList.Add(clone);
         Dynamic_TileMap.SetTile(FireWantedPosition(fire), Fire[0]);
+        Cursor_TileMap.SetTile(FireWantedPosition(fire),null);
     }
 
     void ChangeArrayDirection(FireExpansion fire)
@@ -443,7 +555,52 @@ public class GameManager : MonoBehaviour
         fire.nextDirectionWanted = fire.nextDirectionOrder[0];
     }
 
-    
+
+    void removeFirePrevision()
+    {
+        for (int lenght = 0; lenght < 12; lenght++)
+        {
+            for (int height = 0; height < 9; height++)
+            {
+                Vector3Int mapPos = new Vector3Int(-6 + lenght, -4 + height, 0);
+                (TileBase C_tiles, _) = GetTileAtWorldPosition(mapPos, Cursor_TileMap);
+
+                if (TileExistInArray(C_tiles, FireCursor))
+                {
+                   Cursor_TileMap.SetTile(mapPos,null);
+                }
+            }
+        }
+    }
+    public void FirePrevision()
+    {
+        removeFirePrevision();
+        List<FireExpansion> fireListClone = new List<FireExpansion>(fireList);
+        foreach (FireExpansion fires in fireListClone)
+        {
+            fires.nextDirectionWanted = fires.nextDirectionOrder[0];
+            for (int i = 0; i < fires.haveAlreadyExpand.Length; i++)
+            {
+                //feu ne s'est pas deja rependu et la direction voulu est la bonne
+                if (!fires.haveAlreadyExpand[i])
+                {
+                    fires.nextDirectionWanted = fires.nextDirectionOrder[i];
+                    //cas fire peut se propager
+                    if (CanAddFireOnMap(FireWantedPosition(fires)))
+                    {
+                        Cursor_TileMap.SetTile(FireWantedPosition(fires), FireCursor[0]);
+                        break;
+                    }
+                    else
+                    {
+                        Debug.Log("fail");
+                    }
+                }
+            }
+        }
+    }
+    #endregion
+
     #endregion
 
 
@@ -497,5 +654,90 @@ public class GameManager : MonoBehaviour
 
     #endregion
 
+    #endregion
+
+    #region animation
+
+    IEnumerator AnimateWater(TileBase[] arrayOfTile, float Delay)
+    {
+        Vector3Int cellPos = new Vector3Int(-6, -4, 0);
+        TileBase tile = Tile_TileMap.GetTile(cellPos);
+
+        if (tile != null)
+        {
+            int arrayLenght = arrayOfTile.Length;
+            for (int i = 0; i < arrayLenght; i++)
+            {
+                if (tile == arrayOfTile[arrayLenght-1])
+                {
+                    tile = arrayOfTile[0];
+                    break;
+                }
+
+                else if (tile == arrayOfTile[i])
+                {
+                    tile = arrayOfTile[i + 1];
+                    break;
+                }
+            }
+        }
+        int pos = cellPos.x;
+        for (int i = 0; i < 12; i++)
+        {
+            cellPos.x = pos + i;
+            
+            Tile_TileMap.SetTile(cellPos, tile);
+        }
+        yield return new WaitForSeconds(Delay);
+        StartCoroutine(AnimateWater(arrayOfTile, Delay));
+    }
+
+    public IEnumerator AnimateOneTile(Vector3Int cellPos, TileBase[] arrayOfTile, float Delay,Tilemap tileMap)
+    {
+        TileBase tile = tileMap.GetTile(cellPos);
+        //Debug.Log("Animate on tile on " + cellPos);
+        if (tile != null)
+        {
+            int arrayLenght = arrayOfTile.Length;
+            for (int i = 0; i < arrayLenght; i++)
+            {
+                if (tile == arrayOfTile[arrayLenght - 1])
+                {
+                    tile = arrayOfTile[0];
+                    break;
+                }
+
+                else if (tile == arrayOfTile[i])
+                {
+                    tile = arrayOfTile[i + 1];
+                    break;
+                }
+            }
+            tileMap.SetTile(cellPos, tile);
+            yield return new WaitForSeconds(Delay);
+            StartCoroutine(AnimateOneTile(cellPos,arrayOfTile,Delay,tileMap));
+        }
+    }
+
+    public IEnumerator Move(Vector3Int StartPos, TileBase[] arrayOfStartTile,Vector3Int EndPos, TileBase[] arrayofEndTile,float TotalDelay,Tilemap tilemap, TileBase defaultTile)
+    {
+        int totalOfFrame = arrayOfStartTile.Length + arrayofEndTile.Length;
+
+        for(int i = 0;i < arrayOfStartTile.Length; i++)
+        {
+            tilemap.SetTile(StartPos, arrayOfStartTile[i]);
+            yield return new WaitForSeconds(TotalDelay/totalOfFrame);
+        }
+        tilemap.SetTile(StartPos,null);
+        
+            yield return new WaitForSeconds(0.5f);
+        for(int i = 0;i < arrayofEndTile.Length; i++)
+        {
+            tilemap.SetTile(EndPos,arrayofEndTile[i]);
+            yield return new WaitForSeconds(TotalDelay/totalOfFrame);
+        }
+        tilemap.SetTile(EndPos, defaultTile);
+
+    }
     #endregion
 }

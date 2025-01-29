@@ -58,7 +58,8 @@ public class MouseInWorld : MonoBehaviour
 
                     if (selected != null)
                     {
-                        gameManager.Cursor_TileMap.SetTile(tilePos, gameManager.cursor[0]);
+                        gameManager.Cursor_TileMap.SetTile(tilePos, gameManager.DefaultCursor[0]);
+                        StartCoroutine(gameManager.AnimateOneTile(tilePos,gameManager.DefaultCursor,gameManager.CursorDelay,gameManager.Cursor_TileMap));
                     }
 
                     //Debug.Log(selected);
@@ -94,8 +95,9 @@ public class MouseInWorld : MonoBehaviour
             {
                 if (gameManager.TileExistInArray(tileBase, gameManager.Floors))
                 {
-                    gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), null);
-                    gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)cellPos.x, (int)cellPos.y, 0), selected);
+                    //gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), null);
+                    StartCoroutine(gameManager.Move(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), gameManager.House1MovingStart, cellPos, gameManager.House1MovingEnd, gameManager.MovingDelay, gameManager.Dynamic_TileMap,selected));
+                    //gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)cellPos.x, (int)cellPos.y, 0), selected);
                     gameManager.Cursor_TileMap.SetTile(new Vector3Int((int)cellPos.x, (int)cellPos.y, 0), null);
                     gameManager.PALeft -= 1;
                     gameManager.UpdateText();
@@ -223,7 +225,7 @@ public class MouseInWorld : MonoBehaviour
                     }
                     gameManager.Speel3();
                 }
-                
+
                 //cas dynamics
                 else if (dynamicTile != null && IsTilesAdjacent(cellPos) && AshesTiles == null)
                 {
@@ -231,12 +233,39 @@ public class MouseInWorld : MonoBehaviour
                     if (gameManager.TileExistInArray(dynamicTile, gameManager.Citizens))
                     {
                         // recuperer combien de citoyens sur la case de départ
+                        (TileBase Start_Tile, _) = gameManager.GetTileAtWorldPosition(selectedPosition, gameManager.Dynamic_TileMap);
+                        int Total_Start = TotalOfCitizensSelected(Start_Tile);
+
                         // recuperer combien de citoyens sur la case d'arriver
+                        (TileBase End_Tile, _) = gameManager.GetTileAtWorldPosition(cellPos, gameManager.Dynamic_TileMap);
+                        int Total_End = TotalOfCitizensSelected(End_Tile);
 
                         //enlever -1 a la case de départ
+                        gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), gameManager.Citizens[Total_Start - 1]);
                         //ajouter +1 a la case d'arrivé
+                        gameManager.Dynamic_TileMap.SetTile(cellPos, gameManager.Citizens[Total_End + 1]);
+
+                        gameManager.PALeft -= 1;
+                        gameManager.UpdateText();
+                        gameManager.Speel3();
+                    }
+
+                    else if (dynamicTile == gameManager.BoatTiles)
+                    {
+                        if (gameManager.PassagersOnBoat < 2)
+                        {
+                            (TileBase Start_Tile, _) = gameManager.GetTileAtWorldPosition(selectedPosition, gameManager.Dynamic_TileMap);
+                            int Total_Start = TotalOfCitizensSelected(Start_Tile);
 
 
+                            gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), gameManager.Citizens[Total_Start - 1]);
+
+
+                            gameManager.PassagersOnBoat += 1;
+                            gameManager.PALeft -= 1;
+                            gameManager.UpdateText();
+                            gameManager.Speel3();
+                        }
                     }
                 }
             }
@@ -246,6 +275,7 @@ public class MouseInWorld : MonoBehaviour
         CitizensOnDrain();
         gameManager.Cursor_TileMap.SetTile(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), null);
         gameManager.AshesPrevision();
+        gameManager.FirePrevision();
         selected = null;
         selectedPosition = Vector2.zero;
     }
@@ -268,15 +298,21 @@ public class MouseInWorld : MonoBehaviour
         (Rain_Dynamicstiles[6],gameManager.RainPosition[6]) = gameManager.GetTileAtWorldPosition(gameManager.RainPosition[1] + Vector3Int.up, gameManager.Dynamic_TileMap);
         (Rain_Dynamicstiles[7],gameManager.RainPosition[7]) = gameManager.GetTileAtWorldPosition(gameManager.RainPosition[2] + Vector3Int.down, gameManager.Dynamic_TileMap);
         (Rain_Dynamicstiles[8],gameManager.RainPosition[8]) = gameManager.GetTileAtWorldPosition(gameManager.RainPosition[2] + Vector3Int.up, gameManager.Dynamic_TileMap);
-        
+
+        /*
         for (int i = 0; i < gameManager.RainPosition.Length; i++)
         {
             (TileBase floor, _) = gameManager.GetTileAtWorldPosition(gameManager.RainPosition[i], gameManager.Tile_TileMap);
             if (!gameManager.TileExistInArray(Rain_Dynamicstiles[i], gameManager.House) && floor != null)
             {
-                gameManager.Rain_TileMap.SetTile(gameManager.RainPosition[i],gameManager.cursor[2]);
+                gameManager.Rain_TileMap.SetTile(gameManager.RainPosition[i],gameManager.RainCursor[0]);
+                StartCoroutine(gameManager.AnimateOneTile(gameManager.RainPosition[i], gameManager.RainCursor, gameManager.CursorDelay,gameManager.Cursor_TileMap));
             }
         }
+        */
+        (_, Vector3Int cellpos) = gameManager.GetTileAtWorldPosition((Vector3)CursorOnScreen, gameManager.Cursor_TileMap);
+        gameManager.Rain_TileMap.SetTile(cellpos, gameManager.RainCursor[0]);
+        StartCoroutine(gameManager.AnimateOneTile(cellpos, gameManager.RainCursor, gameManager.CursorDelay,gameManager.Cursor_TileMap));
     }
 
     void InputRain()
@@ -287,7 +323,23 @@ public class MouseInWorld : MonoBehaviour
             Debug.Log("cancel rain");
             
                 gameManager.Spell2();
-            
+            for (int i = 0; i < Rain_Dynamicstiles.Length; i++)
+            {
+
+                if (gameManager.TileExistInArray(Rain_Dynamicstiles[i], gameManager.Fire))
+                {
+                    for (int j = gameManager.fireList.Count - 1; j >= 0; j--)
+                    {
+                        if (gameManager.fireList[j].Position == gameManager.RainPosition[i])
+                        {
+                            gameManager.fireList.RemoveAt(j);
+                        }
+                    }
+                    gameManager.Dynamic_TileMap.SetTile(gameManager.RainPosition[i], null);
+                }
+                gameManager.Rain_TileMap.SetTile(gameManager.RainPosition[i], null);
+
+            }
         }
         if (Input.GetMouseButtonDown(0))
         {
@@ -328,6 +380,7 @@ public class MouseInWorld : MonoBehaviour
                 gameManager.Spell2();
                 gameManager.PALeft -= gameManager.PaForRain;
                 gameManager.UpdateText();
+                gameManager.FirePrevision();
             }
             else
             {
