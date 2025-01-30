@@ -9,16 +9,24 @@ using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
 {
+     #region data
     [Header("Turn and PA", order = 1)]
+    public bool InTuto = true;
     int Turn;
     [SerializeField] int PAMax;
     public int PALeft;
-    bool IsPlayerTurn;
+    public bool IsPlayerTurn;
     public SoundManagement Sound;
-
+    public MouseInWorld mouse;
+    public Vector3Int CoordTuto;
+    [SerializeField] GameObject[] Button;
+    [SerializeField] Vector3Int[] FirstFirePos;
+    [SerializeField] GameObject TutoCursor;
     public bool UnfusionActive { get; private set; }
     public int CitizensSaved;
     public int RainRaduis;
+
+
     [Header("TMPro Ref", order = 2)]
     [SerializeField] TextMeshProUGUI PA_Text;
     [SerializeField] TextMeshProUGUI Turn_Text;
@@ -57,6 +65,7 @@ public class GameManager : MonoBehaviour
     public Vector3Int[] RainPosition = new Vector3Int[9];
     public bool RainActive { get; private set; }
     public int PaForRain = 2;
+    public GameObject RainSprite;
 
     [Header("Attack")]
     public List<FireExpansion> fireList;
@@ -75,54 +84,220 @@ public class GameManager : MonoBehaviour
     public float AshDelay;
     public TileBase[] House1MovingStart;
     public TileBase[] House1MovingEnd;
+    public TileBase[] House2MovingStart;
+    public TileBase[] House2MovingEnd;
+    public TileBase[] House3MovingStart;
+    public TileBase[] House3MovingEnd;
+    public TileBase[] Citizen1MovingStart;
+    public TileBase[] Citizen1MovingEnd; 
+    public TileBase[] Citizen2MovingStart;
+    public TileBase[] Citizen2MovingEnd;  
+    public TileBase[] Citizen3MovingStart;
+    public TileBase[] Citizen3MovingEnd;
     public float MovingDelay;
+    public float FireDelay;
+
 
     Coroutine[] OldAshCursorAnimation = new Coroutine[12];
     Coroutine[] OldAshAnimation = new Coroutine[12];
+    #endregion
 
     private void Start()
     {
         AshesFirstPosition();
-
+        foreach(var obj in Button)
+        {
+            ActivateButton(obj, false);
+        }
+        FirstFire();
         Turn = 1;
         PALeft = PAMax;
-        StartCoroutine(PlayerTurn());
+        StartCoroutine(Tuto());
         StartCoroutine(FireAttack());
         StartCoroutine(VoidAttack());
         StartCoroutine(AnimateWater(WaterTiles, WaterDelay));
+        StartCoroutine(AnimateOneTile(mouse.DrainPosition[0], Drain,WaterDelay,Tile_TileMap));
+        StartCoroutine(AnimateOneTile(mouse.DrainPosition[1], Drain,WaterDelay,Tile_TileMap));
+    }
+    public void ActivateButton(GameObject button, bool active)
+    { 
+            button.GetComponent<Button>().interactable = active;
+    }
+
+    public string RomainConvertion(int number)
+    {
+        switch (number)
+        {
+            case 1:
+                return "I";
+            case 2:
+                return "II";
+            case 3:
+                return "III";
+            case 4:
+                return "IV";
+            case 5:
+                return "V";
+            case 6:
+                return "VI";
+            case 7:
+                return "VII";
+            case 8:
+                return "VIII";
+            case 9:
+                return "IX";
+            case 10:
+                return "X";
+            case 11:
+                return "XI";
+            case 12:
+                return "XII";
+            case 13:
+                return "XIII";
+            case 14:
+                return "XIV";
+            case 15:
+                return "XV";
+        }
+        return "XX";
+    }
+
+    #region coroutine
+    IEnumerator Tuto()
+    {
+        InTuto = true;
+        IsPlayerTurn = true;
+        //dialogue 1
+        CoordTuto = new Vector3Int(-6, 1,0);
+        TutoCursor.transform.position = CoordTuto + new Vector3(0.5f,0.65f,0);
+        yield return new WaitUntil(() => mouse.MouseInputTuto == CoordTuto);
+        Debug.Log("step1");
+        //dialogue 2
+
+        CoordTuto = new Vector3Int(-6, 3,0);
+        TutoCursor.transform.position = CoordTuto + new Vector3(0.5f, 0.65f, 0); ;
+        yield return new WaitUntil(() => mouse.MouseInputTuto == CoordTuto);
+
+        Debug.Log("step2");
+        TutoCursor.transform.position = Button[3].transform.position;
+        ActivateButton(Button[3], true);
+        yield return new WaitUntil(() => UnfusionActive == true);
+
+        Debug.Log("unfusion est actif");
+        Debug.Log("step3");
+        CoordTuto = new Vector3Int(4, 1,0);
+        TutoCursor.transform.position = CoordTuto + new Vector3(0.5f, 0.65f, 0); ;
+
+        yield return new WaitUntil(() => mouse.MouseInputTuto == CoordTuto);
+
+        Debug.Log("step4");
+        CoordTuto = new Vector3Int(4, 0, 0);
+        TutoCursor.transform.position = CoordTuto + new Vector3(0.5f, 0.65f, 0); ;
+
+        yield return new WaitUntil(() => mouse.MouseInputTuto == CoordTuto);
+
+        Debug.Log("step5");
+        yield return new WaitForSeconds(0.2f);
+        mouse.MouseInputTuto = Vector3Int.zero;
+        TutoCursor.transform.position = CoordTuto + new Vector3(0.5f, 0.65f, 0); ;
+
+        CoordTuto = new Vector3Int(4, 0, 0);
+        TutoCursor.transform.position = CoordTuto + new Vector3(0.5f, 0.65f, 0); ;
+
+        yield return new WaitUntil(() => mouse.MouseInputTuto == CoordTuto);
+
+        Debug.Log("step6");
+        CoordTuto = new Vector3Int(4, -1,0);
+        TutoCursor.transform.position = CoordTuto + new Vector3(0.5f, 0.65f, 0); ;
+
+        yield return new WaitUntil(() => mouse.MouseInputTuto == CoordTuto);
+
+        Debug.Log("step7");
+
+        yield return new WaitUntil(() => PaForRain <2);
+        Debug.Log("step8");
+
+        ActivateButton(Button[1],true);
+        TutoCursor.transform.position = Button[1].transform.position ;
+        yield return new WaitUntil(() => RainActive == true);
+        Debug.Log("Rain est actif");
+        Debug.Log("step9");
+        
+        CoordTuto = new Vector3Int(0, 3, 0);
+        TutoCursor.transform.position = CoordTuto + new Vector3(0.5f, 0.65f, 0); ;
+
+        yield return new WaitUntil(() => mouse.MouseInputTuto == CoordTuto);
+        Debug.Log("step10");
+
+        mouse.MouseInputTuto = Vector3Int.zero;
+        CoordTuto = new Vector3Int(0, 3, 0);
+        TutoCursor.transform.position = CoordTuto + new Vector3(0.5f, 0.65f, 0); ;
+
+        yield return new WaitUntil(() => mouse.MouseInputTuto == CoordTuto);
+        Debug.Log("step11");
+        
+        CoordTuto = new Vector3Int(0, 2, 0);
+        TutoCursor.transform.position = CoordTuto + new Vector3(0.5f, 0.65f, 0); ;
+
+        TutoCursor.transform.position = CoordTuto + new Vector3(0.5f, 0.65f, 0); ;
+
+        yield return new WaitUntil(() => mouse.MouseInputTuto == CoordTuto);
+        Debug.Log("step12");
+
+        CoordTuto = new Vector3Int(1, 0, 0);
+        TutoCursor.transform.position = CoordTuto + new Vector3(0.5f, 0.65f, 0); ;
+
+        TutoCursor.transform.position = CoordTuto + new Vector3(0.5f, 0.65f, 0); ;
+
+        yield return new WaitUntil(() => mouse.MouseInputTuto == CoordTuto);
+        Debug.Log("step13");
+        
+        CoordTuto = new Vector3Int(1, -1, 0);
+        TutoCursor.transform.position = CoordTuto + new Vector3(0.5f, 0.65f, 0); ;
+
+        yield return new WaitUntil(() => mouse.MouseInputTuto == CoordTuto);
+        Debug.Log("step13");
+        TutoCursor.transform.position = new Vector3(100f,100f, 0); ;
+
+        Debug.Log("1 fini");
+        StartCoroutine(IaTurn());
+        InTuto = false;
+        foreach (var obj in Button)
+        {
+            ActivateButton(obj, true);
+        }
     }
     IEnumerator PlayerTurn()
     {
-        //Sound.PlaySound(Sound.MyTurnSound, Sound.SFXSource);
+        Sound.PlaySound(Sound.MyTurnSound, Sound.SFXSource);
         AshesPrevision();
         yield return null;
         PALeft = PAMax;
-        IsPlayerTurn = true;
         UpdateText();
+        IsPlayerTurn = true;
         yield return new WaitUntil(() => PALeft <= 0);
-        yield return new WaitForSeconds(0.5f);
         IsPlayerTurn = false;
+        yield return new WaitForSeconds(4f);
         StartCoroutine(IaTurn());
     }
     IEnumerator IaTurn()
     {
-        //Sound.PlaySound(Sound.IATurnSound, Sound.SFXSource);
-        yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(2f);
+        Sound.PlaySound(Sound.IATurnSound, Sound.SFXSource);
+        yield return new WaitForSeconds(2f);
         AshesMovement();
         KillHouses();
         GetLastAshes();
         KillCitizens();
         KillFire();
+        yield return new WaitForSeconds(1f);
         if (Turn >= turnForFireAtk)
         {
             FireExpand();
             FirePrevision();
         }
         Turn += 1;
-        //CheckIfAshIsTheLast();
-
-
-
+        yield return new WaitForSeconds(2f);
         StartCoroutine(PlayerTurn());
     }
 
@@ -156,7 +331,9 @@ public class GameManager : MonoBehaviour
             Dynamic_TileMap.SetTile(VoidPosition[i], null);
             Tile_TileMap.SetTile(VoidPosition[i], Holes[0]);
         }
+        Sound.PlaySound(Sound.SpawnVoidSound, Sound.SFXSource);
     }
+    #endregion
 
     #region Button
 
@@ -181,17 +358,19 @@ public class GameManager : MonoBehaviour
 
             IsBoatOnMap = !IsBoatOnMap;
             UpdateText();
+            Sound.PlaySound(Sound.ButtonSound, Sound.SFXSource);
         }
     }
 
     //Rain
     public void Spell2()
     {
-        Debug.Log("Pa for rain = " + PaForRain);
         if (PALeft >= PaForRain)
         {
             RainActive = !RainActive;
             UpdateText();
+            Sound.PlaySound(Sound.ButtonSound, Sound.SFXSource);
+
         }
 
     }
@@ -204,10 +383,14 @@ public class GameManager : MonoBehaviour
         Color color = UnfusionActive ? Color.green : Color.red;
         Debug.Log("unfusion == " + UnfusionActive);
         Unfusion_Button.GetComponent<Image>().color = color;
+        Sound.PlaySound(Sound.ButtonSound, Sound.SFXSource);
+
     }
     public void EndOfTurn()
     {
         PALeft = 0;
+        Sound.PlaySound(Sound.ButtonSound, Sound.SFXSource);
+
     }
 
     #endregion
@@ -218,7 +401,7 @@ public class GameManager : MonoBehaviour
     {
         PA_Text.text = "PA: " + PALeft;
         PA_Text.text = "PA: " + PALeft;
-        Turn_Text.text = "tour écoulé: " + Turn;
+        Turn_Text.text = "tour écoulé: " + RomainConvertion(Turn);
     }
 
     #endregion
@@ -382,7 +565,7 @@ public class GameManager : MonoBehaviour
     #endregion
 
     #region Dynamics
-
+    #region kill
     void KillCitizens()
     {
         for (int i = 0; i < AshesCellPosition.Length; i++)
@@ -392,12 +575,14 @@ public class GameManager : MonoBehaviour
             {
                 Dynamic_TileMap.SetTile(cellpos, null);
                 Debug.Log("Citizens Die on :" + cellpos);
+                Sound.PlaySound(Sound.DeathSound, Sound.VoiceSource);
             }
         }
     }
 
     void KillFire()
     {
+        ///
         for (int i = 0; i < AshesCellPosition.Length; i++)
         {
             (TileBase tile, Vector3Int cellpos) = GetTileAtWorldPosition(AshesCellPosition[i], Dynamic_TileMap);
@@ -441,8 +626,8 @@ public class GameManager : MonoBehaviour
         }
         
     }
+    #endregion
 
-    /// need to fix
     #region fire
     //Check if tile map are available for fire 
     bool CanAddFireOnMap(Vector3Int cellpos)
@@ -485,6 +670,14 @@ public class GameManager : MonoBehaviour
             }
         }
     }
+    
+    void FirstFire()
+    {
+        foreach(Vector3Int pos in FirstFirePos)
+        {
+            StartCoroutine(AnimateOneTile(pos, Fire, FireDelay, Dynamic_TileMap));
+        }
+    }
 
     Vector3Int FireWantedPosition(FireExpansion fire)
     {
@@ -520,6 +713,7 @@ public class GameManager : MonoBehaviour
         fireList.Add(clone);
         Dynamic_TileMap.SetTile(FireWantedPosition(fire), Fire[0]);
         Cursor_TileMap.SetTile(FireWantedPosition(fire),null);
+        StartCoroutine(AnimateOneTile(clone.Position,Fire,FireDelay,Dynamic_TileMap));
     }
 
     void ChangeArrayDirection(FireExpansion fire)
@@ -554,7 +748,6 @@ public class GameManager : MonoBehaviour
         }
         fire.nextDirectionWanted = fire.nextDirectionOrder[0];
     }
-
 
     void removeFirePrevision()
     {
@@ -719,7 +912,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public IEnumerator Move(Vector3Int StartPos, TileBase[] arrayOfStartTile,Vector3Int EndPos, TileBase[] arrayofEndTile,float TotalDelay,Tilemap tilemap, TileBase defaultTile)
+    public IEnumerator Move(Vector3Int StartPos, TileBase[] arrayOfStartTile,Vector3Int EndPos, TileBase[] arrayofEndTile,float TotalDelay,Tilemap tilemap, TileBase defaultTile,TileBase EndTile = null,Tilemap endTileMap = null)
     {
         int totalOfFrame = arrayOfStartTile.Length + arrayofEndTile.Length;
 
@@ -736,8 +929,28 @@ public class GameManager : MonoBehaviour
             tilemap.SetTile(EndPos,arrayofEndTile[i]);
             yield return new WaitForSeconds(TotalDelay/totalOfFrame);
         }
+        if(EndTile == null)
+        {
         tilemap.SetTile(EndPos, defaultTile);
-
+        }
+        else
+        {
+            if(endTileMap != null)
+            {
+                if(endTileMap != tilemap)
+                {
+                    tilemap.SetTile(EndPos,null);
+                }
+                endTileMap.SetTile(EndPos,EndTile);
+            }
+            else
+            {
+            tilemap.SetTile(EndPos,EndTile);
+            }
+        }
+        Cursor_TileMap.SetTile(EndPos, null);
+        yield return new WaitForSeconds(1f);
+        AshesPrevision();
     }
     #endregion
 }
