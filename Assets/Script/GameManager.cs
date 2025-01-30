@@ -23,15 +23,26 @@ public class GameManager : MonoBehaviour
     [SerializeField] Vector3Int[] FirstFirePos;
     [SerializeField] GameObject TutoCursor;
     public bool UnfusionActive { get; private set; }
+    public int CitizensMax;
     public int CitizensSaved;
+    public int CitizensDead;
     public int RainRaduis;
-
 
     [Header("TMPro Ref", order = 2)]
     [SerializeField] TextMeshProUGUI PA_Text;
     [SerializeField] TextMeshProUGUI Turn_Text;
-    [SerializeField] TextMeshProUGUI Boat_Text;
+    [SerializeField] TextMeshProUGUI CitizensSaved_Text;
+    [SerializeField] TextMeshProUGUI Dialogue_Text;
+    [SerializeField] TextMeshProUGUI Titre_Text;
     [SerializeField] GameObject Unfusion_Button;
+    [SerializeField] Dialogue Dialogue_TUTO;
+    [SerializeField] Dialogue Titre_TUTO;
+    public GameObject FinalScreen;
+    public Dialogue OtherDialogue;
+    public TextMeshProUGUI citoyenssafe_final;
+    public TextMeshProUGUI citoyensdead_final;
+
+
 
     [Header("TileMap", order = 3)]
     public Tilemap Tile_TileMap;
@@ -58,6 +69,7 @@ public class GameManager : MonoBehaviour
     [Header("Boat")]
     [SerializeField] Vector3Int BoatPosition;
     public int PassagersOnBoat;
+    public Sprite[] BoatButton;
     public TileBase BoatTiles;
     bool IsBoatOnMap = true;
 
@@ -96,7 +108,6 @@ public class GameManager : MonoBehaviour
     public TileBase[] Citizen3MovingEnd;
     public float MovingDelay;
     public float FireDelay;
-
 
     Coroutine[] OldAshCursorAnimation = new Coroutine[12];
     Coroutine[] OldAshAnimation = new Coroutine[12];
@@ -161,27 +172,70 @@ public class GameManager : MonoBehaviour
         }
         return "XX";
     }
+    #region endOfGame
+    public void IsAllCitizensDead()
+    {
+        int citizens = CitizensSaved + CitizensDead;
+        if(citizens >= CitizensMax)
+        {
+            FinalScreen.SetActive(true);
+            UpdateFinalScreen();
+        }
+    }
 
+    public void UpdateFinalScreen()
+    {
+        citoyenssafe_final.text = "Vous avez Sauve: \n" + CitizensSaved.ToString();
+        citoyensdead_final.text =  CitizensDead.ToString() + " on peris";
+    }
+
+    public void Leave()
+    {
+        Application.Quit();
+    }
+    #endregion
     #region coroutine
     IEnumerator Tuto()
     {
         InTuto = true;
+
+        Dialogue_Text.text = Dialogue_TUTO.dialogue1;
+        yield return new WaitUntil(() => Input.GetMouseButtonDown(0));
+        Dialogue_Text.text = Dialogue_TUTO.dialogue2;
+        yield return new WaitUntil(() => Input.GetMouseButtonDown(0));
+        Dialogue_Text.text = Dialogue_TUTO.dialogue3;
+        yield return new WaitUntil(() => Input.GetMouseButtonDown(0));
+        Dialogue_Text.text = Dialogue_TUTO.dialogue4;
+        //mis en situation
+
+
         IsPlayerTurn = true;
-        //dialogue 1
+        
         CoordTuto = new Vector3Int(-6, 1,0);
         TutoCursor.transform.position = CoordTuto + new Vector3(0.5f,0.65f,0);
+        Titre_Text.text = Titre_TUTO.dialogue5;
+        Dialogue_Text.text = Dialogue_TUTO.dialogue5;
         yield return new WaitUntil(() => mouse.MouseInputTuto == CoordTuto);
+        //clic sur la maison
         Debug.Log("step1");
-        //dialogue 2
+       
+        Dialogue_Text.text = Dialogue_TUTO.dialogue13;
 
         CoordTuto = new Vector3Int(-6, 3,0);
         TutoCursor.transform.position = CoordTuto + new Vector3(0.5f, 0.65f, 0); ;
         yield return new WaitUntil(() => mouse.MouseInputTuto == CoordTuto);
+        //clic pres des cendres
 
+        Dialogue_Text.text = Dialogue_TUTO.dialogue6;
+        Titre_Text.text = Titre_TUTO.dialogue6;
         Debug.Log("step2");
         TutoCursor.transform.position = Button[3].transform.position;
         ActivateButton(Button[3], true);
         yield return new WaitUntil(() => UnfusionActive == true);
+        //defusion
+
+        Dialogue_Text.text = Dialogue_TUTO.dialogue7;
+
 
         Debug.Log("unfusion est actif");
         Debug.Log("step3");
@@ -189,15 +243,21 @@ public class GameManager : MonoBehaviour
         TutoCursor.transform.position = CoordTuto + new Vector3(0.5f, 0.65f, 0); ;
 
         yield return new WaitUntil(() => mouse.MouseInputTuto == CoordTuto);
+        //unité dans ruelles
+
+        Dialogue_Text.text = Dialogue_TUTO.dialogue8;
+        Titre_Text.text = Titre_TUTO.dialogue8;
 
         Debug.Log("step4");
         CoordTuto = new Vector3Int(4, 0, 0);
         TutoCursor.transform.position = CoordTuto + new Vector3(0.5f, 0.65f, 0); ;
-
         yield return new WaitUntil(() => mouse.MouseInputTuto == CoordTuto);
+        // unite select dans ruelle
+
+        Dialogue_Text.text = Dialogue_TUTO.dialogue8;
+        Titre_Text.text = Titre_TUTO.dialogue8;
 
         Debug.Log("step5");
-        yield return new WaitForSeconds(0.2f);
         mouse.MouseInputTuto = Vector3Int.zero;
         TutoCursor.transform.position = CoordTuto + new Vector3(0.5f, 0.65f, 0); ;
 
@@ -205,21 +265,22 @@ public class GameManager : MonoBehaviour
         TutoCursor.transform.position = CoordTuto + new Vector3(0.5f, 0.65f, 0); ;
 
         yield return new WaitUntil(() => mouse.MouseInputTuto == CoordTuto);
-
+        Dialogue_Text.text = Dialogue_TUTO.dialogue11;
         Debug.Log("step6");
         CoordTuto = new Vector3Int(4, -1,0);
         TutoCursor.transform.position = CoordTuto + new Vector3(0.5f, 0.65f, 0); ;
 
         yield return new WaitUntil(() => mouse.MouseInputTuto == CoordTuto);
+        // clic sur drain
+
+        Dialogue_Text.text = Dialogue_TUTO.dialogue9;
+        Titre_Text.text = Titre_TUTO.dialogue9;
 
         Debug.Log("step7");
-
-        yield return new WaitUntil(() => PaForRain <2);
-        Debug.Log("step8");
-
         ActivateButton(Button[1],true);
         TutoCursor.transform.position = Button[1].transform.position ;
         yield return new WaitUntil(() => RainActive == true);
+        //pluie actif
         Debug.Log("Rain est actif");
         Debug.Log("step9");
         
@@ -227,6 +288,7 @@ public class GameManager : MonoBehaviour
         TutoCursor.transform.position = CoordTuto + new Vector3(0.5f, 0.65f, 0); ;
 
         yield return new WaitUntil(() => mouse.MouseInputTuto == CoordTuto);
+        Dialogue_Text.text = Dialogue_TUTO.dialogue10;
         Debug.Log("step10");
 
         mouse.MouseInputTuto = Vector3Int.zero;
@@ -234,6 +296,8 @@ public class GameManager : MonoBehaviour
         TutoCursor.transform.position = CoordTuto + new Vector3(0.5f, 0.65f, 0); ;
 
         yield return new WaitUntil(() => mouse.MouseInputTuto == CoordTuto);
+                Dialogue_Text.text = Dialogue_TUTO.dialogue10;
+
         Debug.Log("step11");
         
         CoordTuto = new Vector3Int(0, 2, 0);
@@ -246,8 +310,8 @@ public class GameManager : MonoBehaviour
 
         CoordTuto = new Vector3Int(1, 0, 0);
         TutoCursor.transform.position = CoordTuto + new Vector3(0.5f, 0.65f, 0); ;
-
-        TutoCursor.transform.position = CoordTuto + new Vector3(0.5f, 0.65f, 0); ;
+        Dialogue_Text.text = Dialogue_TUTO.dialogue12;
+        Titre_Text.text = Titre_TUTO.dialogue12;
 
         yield return new WaitUntil(() => mouse.MouseInputTuto == CoordTuto);
         Debug.Log("step13");
@@ -258,7 +322,8 @@ public class GameManager : MonoBehaviour
         yield return new WaitUntil(() => mouse.MouseInputTuto == CoordTuto);
         Debug.Log("step13");
         TutoCursor.transform.position = new Vector3(100f,100f, 0); ;
-
+        Dialogue_Text.text =  "";
+        Titre_Text.text =  "";
         Debug.Log("1 fini");
         StartCoroutine(IaTurn());
         InTuto = false;
@@ -282,7 +347,6 @@ public class GameManager : MonoBehaviour
     }
     IEnumerator IaTurn()
     {
-        yield return new WaitForSeconds(2f);
         Sound.PlaySound(Sound.IATurnSound, Sound.SFXSource);
         yield return new WaitForSeconds(2f);
         AshesMovement();
@@ -290,14 +354,15 @@ public class GameManager : MonoBehaviour
         GetLastAshes();
         KillCitizens();
         KillFire();
-        yield return new WaitForSeconds(1f);
+        IsAllCitizensDead();
+        yield return new WaitForSeconds(2f);
         if (Turn >= turnForFireAtk)
         {
             FireExpand();
             FirePrevision();
         }
         Turn += 1;
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSeconds(1f);
         StartCoroutine(PlayerTurn());
     }
 
@@ -345,14 +410,14 @@ public class GameManager : MonoBehaviour
             PALeft -= 1;
             if (IsBoatOnMap)
             {
-                Dynamic_TileMap.SetTile(BoatPosition, null);
+                Button[0].GetComponent<Image>().sprite = BoatButton[1];
                 CitizensSaved += PassagersOnBoat;
                 PassagersOnBoat = 0;
                 Sound.PlaySound(Sound.BoatLeavingSound, Sound.SFXSource);
             }
             else
             {
-                Dynamic_TileMap.SetTile(BoatPosition, BoatTiles);
+                Button[0].GetComponent<Image>().sprite = BoatButton[0];
                 Sound.PlaySound(Sound.BoatComingSound, Sound.SFXSource);
             }
 
@@ -575,6 +640,7 @@ public class GameManager : MonoBehaviour
             {
                 Dynamic_TileMap.SetTile(cellpos, null);
                 Debug.Log("Citizens Die on :" + cellpos);
+                CitizensDead++;
                 Sound.PlaySound(Sound.DeathSound, Sound.VoiceSource);
             }
         }

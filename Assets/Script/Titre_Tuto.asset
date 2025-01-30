@@ -10,10 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 851ad222d6600ea4983b592c21fd417c, type: 3}
-  m_Name: Dialogue
+  m_Name: Titre_Tuto
   m_EditorClassIdentifier: 
   dialogue1: 
   dialogue2: 
   dialogue3: 
   dialogue4: 
-  dialogue5: 
+  dialogue5: "B\xE2timent d\xE9placables"
+  dialogue6: "D\xE9fusion"
+  dialogue7: 
+  dialogue8: Canalisation
+  dialogue9: 
+  dialogue10: "D\xE9placement unit\xE9"
+  dialogue11: 
+  dialogue12: Vide
+  dialogue13: 
+  dialogue14: Portail
+  dialogue15: 
+  dialogue16: 

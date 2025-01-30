@@ -389,8 +389,23 @@ public class MouseInWorld : MonoBehaviour
                     {
                         if (gameManager.TileExistInArray(tileBase, gameManager.Floors) || gameManager.TileExistInArray(tileBase, gameManager.Drain))
                         {
-                            gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)cellPos.x, (int)cellPos.y, 0), gameManager.Citizens[HowManyCitizensOnTiles(tileSelected, dynamicTile) - 1]);
                             gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), null);
+
+                            TileBase tile = gameManager.Citizens[HowManyCitizensOnTiles(tileSelected, dynamicTile) - 1];
+                            if (selected == gameManager.Citizens[0])
+                            {
+                                StartCoroutine(gameManager.Move(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), gameManager.Citizen1MovingStart, cellPos, gameManager.Citizen1MovingEnd, gameManager.MovingDelay, gameManager.Dynamic_TileMap, selected,tile));
+                            }
+                            else if (selected == gameManager.Citizens[1])
+                            {
+                                StartCoroutine(gameManager.Move(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), gameManager.Citizen2MovingStart, cellPos, gameManager.Citizen2MovingEnd, gameManager.MovingDelay, gameManager.Dynamic_TileMap,selected, tile));
+
+                            }
+                            else if (selected == gameManager.Citizens[2])
+                            {
+                                StartCoroutine(gameManager.Move(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), gameManager.Citizen3MovingStart, cellPos, gameManager.Citizen3MovingEnd, gameManager.MovingDelay, gameManager.Dynamic_TileMap,selected, tile));
+
+                            }
                             gameManager.PALeft -= 1;
                             gameManager.UpdateText();
                         }
@@ -430,9 +445,26 @@ public class MouseInWorld : MonoBehaviour
                     if (gameManager.TileExistInArray(tileBase, gameManager.Floors))
                     {
                         Debug.Log("Floors");
-                        gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), gameManager.Citizens[TotalOfCitizensSelected(selected) - 1]);
+                        ///
+                        /*
+                        if (selected == gameManager.Citizens[0])
+                        {
+                            StartCoroutine(gameManager.Move(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), gameManager.Citizen1MovingStart, cellPos, gameManager.Citizen1MovingEnd, gameManager.MovingDelay, gameManager.Dynamic_TileMap,gameManager.Citizens[0]));
+                        }
+                        else if (selected == gameManager.Citizens[1])
+                        {
+                            StartCoroutine(gameManager.Move(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), gameManager.Citizen2MovingStart, cellPos, gameManager.Citizen2MovingEnd, gameManager.MovingDelay, gameManager.Dynamic_TileMap, gameManager.Citizens[0]));
+
+                        }
+                        else if (selected == gameManager.Citizens[2])
+                        {
+                            StartCoroutine(gameManager.Move(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), gameManager.Citizen3MovingStart, cellPos, gameManager.Citizen3MovingEnd, gameManager.MovingDelay, gameManager.Dynamic_TileMap, gameManager.Citizens[0]));
+
+                        }
+                        */
                         gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)cellPos.x, (int)cellPos.y, 0), gameManager.Citizens[0]);
                         gameManager.PALeft -= 1;
+                        gameManager.Dynamic_TileMap.SetTile(new Vector3Int((int)selectedPosition.x, (int)selectedPosition.y, 0), gameManager.Citizens[TotalOfCitizensSelected(selected) - 1]);
                         gameManager.UpdateText();
                     }
 

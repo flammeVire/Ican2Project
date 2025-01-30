@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a714f00630689bd44ac8a6bc3410988a, type: 3}
-  m_Name: Fire 1
+  m_Name: Fire 3
   m_EditorClassIdentifier: 
   nextDirectionWanted: 0
-  nextDirectionOrder: 00000000000000000000000000000000
+  nextDirectionOrder: 00000000020000000100000003000000
   haveAlreadyExpand: 00000000
-  Position: {x: 0, y: 0, z: 0}
+  Position: {x: 2, y: -2, z: 0}

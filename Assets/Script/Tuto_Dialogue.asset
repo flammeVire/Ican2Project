@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 851ad222d6600ea4983b592c21fd417c, type: 3}
+  m_Name: Tuto_Dialogue
+  m_EditorClassIdentifier: 
+  dialogue1: "Mon oncle ! Vous querellez-vous encore avec Vulcain, votre \xE9ternel
+    rival ?"
+  dialogue2: "N\u2019ayez crainte, je ne l\u2019appr\xE9cie gu\xE8re non plus. Je
+    vous pr\xEAterai donc main-forte pour le vaincre \xE0 son propre jeu."
+  dialogue3: "Voyez-vous la cit\xE9 de Pomp\xE9i ? Il a l'intention de la r\xE9duire
+    en cendres et d'an\xE9antir tous les mortels qui s'y trouvent !"
+  dialogue4: "Je vais vous montrer la voie pour pr\xE9server les mortels et contrecarrer
+    les machinations de votre rival."
+  dialogue5: "Vous pouvez d\xE9placer les b\xE2timents o\xF9 bon vous semble sur
+    la carte."
+  dialogue6: "Vous devriez s\xE9parer ces unit\xE9s pour leur faire emprunter cette
+    ruelle"
+  dialogue7: "Les unit\xE9s demeureront s\xE9par\xE9es tant que le bouton n\u2019aura
+    pas \xE9t\xE9 d\xE9sactiv\xE9 ou qu\u2019aucune d\u2019elles ne se sera d\xE9plac\xE9e."
+  dialogue8: "Exploitez les zones de canalisations reli\xE9es aux thermes pour r\xE9duire
+    de moiti\xE9 le co\xFBt de la pluie, \xE0 condition qu'une unit\xE9 se trouve
+    au-dessus."
+  dialogue9: "Faites s\u2019abattre la pluie o\xF9 bon vous semble, mais veillez
+    attentivement \xE0 la port\xE9e de son action."
+  dialogue10: "Diriger les mortels vers des cases adjacentes afin d\u2019\xE9chapper
+    aux cendres, qui progressent \xE0 chaque tour"
+  dialogue11: "Les unit\xE9s poss\xE8dent une limite de fusion, elles ne peuvent
+    s\u2019unir qu\u2019\xE0 un maximum de trois."
+  dialogue12: "Combler le trou du terrain avec un batiment afin de cr\xE9er un passage"
+  dialogue13: "Maintenant ce batiment bloquera les cendre sur sa ligne verticale
+    avant d\u2019\xEAtre d\xE9truit"
+  dialogue14: "Fusionnez au moins deux unit\xE9s et d\xE9placez-les \xE0 travers
+    ce portail pour gagner du temps, \xE7a ne consomme pas de point d\u2019action."
+  dialogue15: 
+  dialogue16: 
