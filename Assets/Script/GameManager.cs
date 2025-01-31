@@ -461,9 +461,20 @@ public class GameManager : MonoBehaviour
     #endregion
 
     #region ShowText
-
+    public GameObject[] Tridents;
     public void UpdateText()
     {
+        for (int i = 0; i < Tridents.Length; i++)
+        {
+            if (i < PALeft)
+            {
+                Tridents[i].SetActive(true); // Afficher le sprite
+            }
+            else
+            {
+                Tridents[i].SetActive(false); // Cacher le sprite
+            }
+        }
         PA_Text.text = "PA: " + PALeft;
         PA_Text.text = "PA: " + PALeft;
         Turn_Text.text = "tour écoulé: " + RomainConvertion(Turn);
