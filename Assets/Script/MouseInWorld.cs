@@ -691,7 +691,7 @@ public class MouseInWorld : MonoBehaviour
         Debug.Log("total of citizens selected = " + number);
         return number;
     }
-    void CitizensOnDrain()
+    public void CitizensOnDrain()
     {
         foreach (Vector3Int pos in DrainPosition) 
         {

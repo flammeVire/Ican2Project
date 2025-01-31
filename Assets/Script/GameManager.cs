@@ -92,6 +92,7 @@ public class GameManager : MonoBehaviour
     public TileBase[] RainCursor;
     public TileBase[] AshCursor;
     public TileBase[] FireCursor;
+    public TileBase[] VoidCursor;
     public float CursorDelay;
     public float AshDelay;
     public TileBase[] House1MovingStart;
@@ -342,7 +343,7 @@ public class GameManager : MonoBehaviour
         IsPlayerTurn = true;
         yield return new WaitUntil(() => PALeft <= 0);
         IsPlayerTurn = false;
-        yield return new WaitForSeconds(4f);
+        yield return new WaitForSeconds(2f);
         StartCoroutine(IaTurn());
     }
     IEnumerator IaTurn()
@@ -352,18 +353,20 @@ public class GameManager : MonoBehaviour
         AshesMovement();
         KillHouses();
         GetLastAshes();
+        yield return new WaitForSeconds(1f);
         KillCitizens();
         KillFire();
         IsAllCitizensDead();
         yield return new WaitForSeconds(2f);
-        if (Turn >= turnForFireAtk)
+        if (Turn == turnForFireAtk)
         {
             FireExpand();
             FirePrevision();
         }
-        Turn += 1;
+        
         yield return new WaitForSeconds(1f);
         StartCoroutine(PlayerTurn());
+        Turn += 1;
     }
 
     IEnumerator FireAttack()
@@ -375,21 +378,29 @@ public class GameManager : MonoBehaviour
             if (CanAddFireOnMap(fireList[i].Position))
             {
                 Cursor_TileMap.SetTile(fireList[i].Position, FireCursor[0]);
+                StartCoroutine(AnimateOneTile(fireList[i].Position, FireCursor, CursorDelay, Cursor_TileMap));
             }
         }
 
-        yield return new WaitUntil(() => Turn == turnForFireAtk);
+        yield return new WaitUntil(() => Turn+1 == turnForFireAtk);
         for (int i = 0; i < fireList.Count; i++)
         {
             if (CanAddFireOnMap(fireList[i].Position))
             {
                 Dynamic_TileMap.SetTile(fireList[i].Position, Fire[0]);
+                StartCoroutine(AnimateOneTile(fireList[i].Position, Fire, AshDelay, Dynamic_TileMap));
             }
         }
     }
 
     IEnumerator VoidAttack()
     {
+        yield return new WaitUntil(() => Turn+1 == turnForVoidAtk-1);
+        for (int i = 0; i < VoidPosition.Count; i++)
+        {
+            Cursor_TileMap.SetTile(VoidPosition[i], VoidCursor[0]);
+            StartCoroutine(AnimateOneTile(VoidPosition[i], VoidCursor, CursorDelay, Cursor_TileMap));
+        }
         yield return new WaitUntil(() => Turn == turnForVoidAtk);
         for (int i = 0; i < VoidPosition.Count; i++)
         {
@@ -445,9 +456,7 @@ public class GameManager : MonoBehaviour
     {
         UnfusionActive = !UnfusionActive;
 
-        Color color = UnfusionActive ? Color.green : Color.red;
         Debug.Log("unfusion == " + UnfusionActive);
-        Unfusion_Button.GetComponent<Image>().color = color;
         Sound.PlaySound(Sound.ButtonSound, Sound.SFXSource);
 
     }
@@ -651,7 +660,19 @@ public class GameManager : MonoBehaviour
             {
                 Dynamic_TileMap.SetTile(cellpos, null);
                 Debug.Log("Citizens Die on :" + cellpos);
-                CitizensDead++;
+                if(tile == Citizens[0])
+                {
+                    CitizensDead++;
+                }
+                else if (tile == Citizens[1])
+                {
+                    CitizensDead += 2;
+                }
+                else if (tile == Citizens[2])
+                {
+                    CitizensDead += 3;
+                }
+                Debug.Log("citoynes mort == " + CitizensDead);
                 Sound.PlaySound(Sound.DeathSound, Sound.VoiceSource);
             }
         }
@@ -659,16 +680,24 @@ public class GameManager : MonoBehaviour
 
     void KillFire()
     {
-        ///
+        /*
         for (int i = 0; i < AshesCellPosition.Length; i++)
         {
-            (TileBase tile, Vector3Int cellpos) = GetTileAtWorldPosition(AshesCellPosition[i], Dynamic_TileMap);
-            if (TileExistInArray(tile, Fire))
-            {
-                Dynamic_TileMap.SetTile(cellpos, null);
-                Debug.Log("Citizens Die on :" + cellpos);
+            for(int j = 0;i<9; j++) 
+            { 
+                (TileBase D_tile,Vector3Int cellpos) = GetTileAtWorldPosition(new Vector3Int(i,j,0),Dynamic_TileMap);
+
+                if (TileExistInArray(D_tile, Fire))
+                {
+                    (TileBase A_tile,_) = GetTileAtWorldPosition(cellpos,Dynamic_TileMap);
+                    if (TileExistInArray(A_tile, Ashes))
+                    {
+                        Dynamic_TileMap.SetTile(cellpos,null);
+                    }
+                }
             }
         }
+        */
         FirePrevision();
     }
 
@@ -1028,6 +1057,7 @@ public class GameManager : MonoBehaviour
         Cursor_TileMap.SetTile(EndPos, null);
         yield return new WaitForSeconds(1f);
         AshesPrevision();
+        mouse.CitizensOnDrain();
     }
     #endregion
 }
