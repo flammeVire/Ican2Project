@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 851ad222d6600ea4983b592c21fd417c, type: 3}
   m_Name: Tuto_Dialogue
   m_EditorClassIdentifier: 
+<<<<<<< Updated upstream
   dialogue1: "Mon oncle ! Vous querellez-vous encore avec Vulcain, votre \xE9ternel
     rival ?"
   dialogue2: "N\u2019ayez crainte, je ne l\u2019appr\xE9cie gu\xE8re non plus. Je
@@ -40,5 +41,32 @@ MonoBehaviour:
     avant d\u2019\xEAtre d\xE9truit"
   dialogue14: "Fusionnez au moins deux unit\xE9s et d\xE9placez-les \xE0 travers
     ce portail pour gagner du temps, \xE7a ne consomme pas de point d\u2019action."
+=======
+  dialogue1: Mon oncle !  Vous querellez-vous encore avec Vulcain, votre eternel
+    rival ?
+  dialogue2: N'ayez crainte, je ne l'apprecie guere non plus. Je vous preterai donc
+    main-forte pour le vaincre a son propre jeu.
+  dialogue3: Voyez-vous la cite de Pompei ? Il a l'intention de la reduire en cendres
+    et d'aneantir tous les mortels qui s'y trouvent !
+  dialogue4: Je vais vous montrer la voie pour preserver les mortels et contrecarrer
+    les machinations de votre rival.
+  dialogue5: Vous pouvez deplacer les batiments ou bon vous semble sur la carte.
+  dialogue6: Vous devriez separer ces unites pour leur faire emprunter cette ruelle
+  dialogue7: Les unites demeureront separees tant que le bouton n'aura pas ete desactive
+    ou qu'aucune d'elles ne se sera deplacee.
+  dialogue8: Exploitez les zones de canalisations pour reduire de moitie le cout
+    de la pluie, a condition qu'une unite se trouve au-dessus.
+  dialogue9: Faites s'abattre la pluie ou bon vous semble, mais veillez attentivement
+    a la portee de son action.
+  dialogue10: Diriger les mortels vers des cases adjacentes afin d'echapper aux cendres,
+    qui progressent a chaque tour
+  dialogue11: Les unites possedent une limite de fusion, elles ne peuvent s'unir
+    qu'a un maximum de trois.
+  dialogue12: Combler le trou du terrain avec un batiment afin de creer un passage
+  dialogue13: Maintenant ce batiment bloquera les cendre sur sa ligne verticale avant
+    d'etre detruit
+  dialogue14: Fusionnez au moins deux unites et deplacez-les a travers le portail,
+    ca ne consomme pas de point d'action.
+>>>>>>> Stashed changes
   dialogue15: 
   dialogue16: 

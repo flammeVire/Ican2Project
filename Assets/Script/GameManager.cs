@@ -33,7 +33,11 @@ public class GameManager : MonoBehaviour
     [SerializeField] TextMeshProUGUI Turn_Text;
     [SerializeField] TextMeshProUGUI CitizensSaved_Text;
     [SerializeField] TextMeshProUGUI Dialogue_Text;
+<<<<<<< Updated upstream
     [SerializeField] TextMeshProUGUI Titre_Text;
+=======
+    [SerializeField] TextMeshProUGUI OnBoat_Text;
+>>>>>>> Stashed changes
     [SerializeField] GameObject Unfusion_Button;
     [SerializeField] Dialogue Dialogue_TUTO;
     [SerializeField] Dialogue Titre_TUTO;
@@ -343,11 +347,18 @@ public class GameManager : MonoBehaviour
         IsPlayerTurn = true;
         yield return new WaitUntil(() => PALeft <= 0);
         IsPlayerTurn = false;
-        yield return new WaitForSeconds(2f);
         StartCoroutine(IaTurn());
     }
     IEnumerator IaTurn()
     {
+<<<<<<< Updated upstream
+=======
+        yield return new WaitForSeconds(2f);
+        foreach (var obj in Button)
+        {
+            ActivateButton(obj, false);
+        }
+>>>>>>> Stashed changes
         Sound.PlaySound(Sound.IATurnSound, Sound.SFXSource);
         yield return new WaitForSeconds(2f);
         AshesMovement();
@@ -486,6 +497,7 @@ public class GameManager : MonoBehaviour
         }
         PA_Text.text = "PA: " + PALeft;
         PA_Text.text = "PA: " + PALeft;
+        OnBoat_Text.text = "Citoyens dans le bateau: \n" + PassagersOnBoat.ToString();
         Turn_Text.text = "tour écoulé: " + RomainConvertion(Turn);
     }
 
@@ -924,10 +936,6 @@ public class GameManager : MonoBehaviour
         //gauche bas droite gauche
         bool[] CanMoveAdjacent = new bool[4] {false,false,false,false};
         Vector3Int[] NextTilePosition = new Vector3Int[4] {cellPos+Vector3Int.left,cellPos+Vector3Int.down,cellPos+Vector3Int.right,cellPos+Vector3Int.up };
-
-       
-
-
         for (int i = 0; i < 4; i++)
         {
             TileBase AshesTile = null, HouseTile = null,FloorTile = null;
@@ -946,7 +954,6 @@ public class GameManager : MonoBehaviour
                     CanMoveAdjacent[i] = false;
                 }
             }
-
         }
         return (CanMoveAdjacent, NextTilePosition);
     }
