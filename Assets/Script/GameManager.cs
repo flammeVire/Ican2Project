@@ -33,12 +33,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] TextMeshProUGUI Turn_Text;
     [SerializeField] TextMeshProUGUI CitizensSaved_Text;
     [SerializeField] TextMeshProUGUI Dialogue_Text;
-    [SerializeField] TextMeshProUGUI Titre_Text;
     [SerializeField] GameObject Unfusion_Button;
     [SerializeField] Dialogue Dialogue_TUTO;
-    [SerializeField] Dialogue Titre_TUTO;
     public GameObject FinalScreen;
-    public Dialogue OtherDialogue;
     public TextMeshProUGUI citoyenssafe_final;
     public TextMeshProUGUI citoyensdead_final;
 
@@ -84,6 +81,9 @@ public class GameManager : MonoBehaviour
     public int turnForFireAtk;
     public List<Vector3Int> VoidPosition;
     public int turnForVoidAtk;
+    public SpriteRenderer neptune;
+    public SpriteRenderer Vulcain;
+
 
     [Header("AnimationTile")]
     public TileBase[] WaterTiles;
@@ -116,6 +116,8 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
+        neptune.color = new Color(neptune.color.r, neptune.color.g, neptune.color.b, 1f);
+        Vulcain.color = new Color(neptune.color.r, neptune.color.g, neptune.color.b, 0.5f);
         AshesFirstPosition();
         foreach(var obj in Button)
         {
@@ -187,11 +189,12 @@ public class GameManager : MonoBehaviour
     public void UpdateFinalScreen()
     {
         citoyenssafe_final.text = "Vous avez Sauve: \n" + CitizensSaved.ToString();
-        citoyensdead_final.text =  CitizensDead.ToString() + " on peris";
+        citoyensdead_final.text =  CitizensDead.ToString() + " mortel \n on peris des attaques de Vulcain";
     }
 
     public void Leave()
     {
+        Debug.Log("leave");
         Application.Quit();
     }
     #endregion
@@ -214,7 +217,6 @@ public class GameManager : MonoBehaviour
         
         CoordTuto = new Vector3Int(-6, 1,0);
         TutoCursor.transform.position = CoordTuto + new Vector3(0.5f,0.65f,0);
-        Titre_Text.text = Titre_TUTO.dialogue5;
         Dialogue_Text.text = Dialogue_TUTO.dialogue5;
         yield return new WaitUntil(() => mouse.MouseInputTuto == CoordTuto);
         //clic sur la maison
@@ -228,7 +230,6 @@ public class GameManager : MonoBehaviour
         //clic pres des cendres
 
         Dialogue_Text.text = Dialogue_TUTO.dialogue6;
-        Titre_Text.text = Titre_TUTO.dialogue6;
         Debug.Log("step2");
         TutoCursor.transform.position = Button[3].transform.position;
         ActivateButton(Button[3], true);
@@ -247,7 +248,6 @@ public class GameManager : MonoBehaviour
         //unité dans ruelles
 
         Dialogue_Text.text = Dialogue_TUTO.dialogue8;
-        Titre_Text.text = Titre_TUTO.dialogue8;
 
         Debug.Log("step4");
         CoordTuto = new Vector3Int(4, 0, 0);
@@ -255,8 +255,7 @@ public class GameManager : MonoBehaviour
         yield return new WaitUntil(() => mouse.MouseInputTuto == CoordTuto);
         // unite select dans ruelle
 
-        Dialogue_Text.text = Dialogue_TUTO.dialogue8;
-        Titre_Text.text = Titre_TUTO.dialogue8;
+        Dialogue_Text.text = Dialogue_TUTO.dialogue14;
 
         Debug.Log("step5");
         mouse.MouseInputTuto = Vector3Int.zero;
@@ -275,7 +274,6 @@ public class GameManager : MonoBehaviour
         // clic sur drain
 
         Dialogue_Text.text = Dialogue_TUTO.dialogue9;
-        Titre_Text.text = Titre_TUTO.dialogue9;
 
         Debug.Log("step7");
         ActivateButton(Button[1],true);
@@ -312,7 +310,6 @@ public class GameManager : MonoBehaviour
         CoordTuto = new Vector3Int(1, 0, 0);
         TutoCursor.transform.position = CoordTuto + new Vector3(0.5f, 0.65f, 0); ;
         Dialogue_Text.text = Dialogue_TUTO.dialogue12;
-        Titre_Text.text = Titre_TUTO.dialogue12;
 
         yield return new WaitUntil(() => mouse.MouseInputTuto == CoordTuto);
         Debug.Log("step13");
@@ -324,7 +321,6 @@ public class GameManager : MonoBehaviour
         Debug.Log("step13");
         TutoCursor.transform.position = new Vector3(100f,100f, 0); ;
         Dialogue_Text.text =  "";
-        Titre_Text.text =  "";
         Debug.Log("1 fini");
         StartCoroutine(IaTurn());
         InTuto = false;
@@ -336,11 +332,17 @@ public class GameManager : MonoBehaviour
     IEnumerator PlayerTurn()
     {
         Sound.PlaySound(Sound.MyTurnSound, Sound.SFXSource);
+        neptune.color = new Color(neptune.color.r, neptune.color.g, neptune.color.b, 1f);
+        Vulcain.color = new Color(neptune.color.r, neptune.color.g, neptune.color.b,0.5f);
         AshesPrevision();
         yield return null;
         PALeft = PAMax;
         UpdateText();
         IsPlayerTurn = true;
+        foreach (var obj in Button)
+        {
+            ActivateButton(obj, true);
+        }
         yield return new WaitUntil(() => PALeft <= 0);
         IsPlayerTurn = false;
         yield return new WaitForSeconds(2f);
@@ -348,7 +350,13 @@ public class GameManager : MonoBehaviour
     }
     IEnumerator IaTurn()
     {
+        foreach (var obj in Button)
+        {
+            ActivateButton(obj, false);
+        }
         Sound.PlaySound(Sound.IATurnSound, Sound.SFXSource);
+        neptune.color = new Color(neptune.color.r, neptune.color.g, neptune.color.b, 0.5f);
+        Vulcain.color = new Color(neptune.color.r, neptune.color.g, neptune.color.b, 1f);
         yield return new WaitForSeconds(2f);
         AshesMovement();
         KillHouses();
@@ -395,13 +403,13 @@ public class GameManager : MonoBehaviour
 
     IEnumerator VoidAttack()
     {
-        yield return new WaitUntil(() => Turn+1 == turnForVoidAtk-1);
+        yield return new WaitUntil(() => Turn == turnForVoidAtk-1);
         for (int i = 0; i < VoidPosition.Count; i++)
         {
             Cursor_TileMap.SetTile(VoidPosition[i], VoidCursor[0]);
             StartCoroutine(AnimateOneTile(VoidPosition[i], VoidCursor, CursorDelay, Cursor_TileMap));
         }
-        yield return new WaitUntil(() => Turn == turnForVoidAtk);
+        yield return new WaitUntil(() => Turn+1 == turnForVoidAtk);
         for (int i = 0; i < VoidPosition.Count; i++)
         {
             Dynamic_TileMap.SetTile(VoidPosition[i], null);
